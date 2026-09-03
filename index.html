@@ -60,6 +60,15 @@
             background: #9E1220;
             border-radius: 8px;
         }
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
+            70% { box-shadow: 0 0 0 14px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+        .pulsing-bin-picker {
+            animation: pulseRing 1.6s infinite ease-out;
+            border-radius: 9999px;
+        }
     </style>
 </head>
 <body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-rose-600 selection:text-white flex flex-col">
@@ -107,20 +116,23 @@
                 <div>
                     <h1 class="font-extrabold text-sm text-white tracking-wide flex items-center gap-2">
                         EcoClean Municipal Command
-                        <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">● System Active</span>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">● Operations Live</span>
                     </h1>
-                    <p class="text-[10px] text-slate-400">Kopargaon Civic Sanitation & Fleet Dispatch</p>
+                    <p class="text-[10px] text-slate-400">Kopargaon Civic Sanitation, Dustbins & Fleet Management</p>
                 </div>
             </div>
 
-            <!-- View Navigation & User Controls -->
+            <!-- View Navigation Controls -->
             <div class="flex items-center gap-3">
-                <div class="bg-slate-900/80 p-1 rounded-xl border border-rose-950/60 flex text-xs font-bold">
+                <div class="bg-slate-900/80 p-1 rounded-xl border border-rose-950/60 flex text-xs font-bold gap-1">
                     <button onclick="switchAdminTab('overview')" id="tabBtnOverview" class="px-3 py-1.5 rounded-lg bg-rose-700 text-white shadow-sm">
-                        📊 Live Triage & Geo-Map
+                        📊 Live Map & Triage
+                    </button>
+                    <button onclick="switchAdminTab('dustbins')" id="tabBtnDustbins" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+                        🗑️ Dustbins (<span id="totalBinsCountBadge">0</span>)
                     </button>
                     <button onclick="switchAdminTab('workers')" id="tabBtnWorkers" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
-                        👷 Crew & Fleet (<span id="activeCrewCount">3</span>)
+                        👷 Crew & Fleet (<span id="activeCrewCount">0</span>)
                     </button>
                 </div>
                 <button onclick="handleAdminLogout()" class="px-3 py-1.5 text-xs bg-rose-950/50 hover:bg-rose-900 border border-rose-800/40 text-rose-300 font-bold rounded-xl active:scale-95 transition-all">
@@ -129,7 +141,7 @@
             </div>
         </header>
 
-        <!-- Main Body Workspace -->
+        <!-- Main Workspace -->
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
             <!-- High-Level Metric Tiles -->
@@ -137,63 +149,52 @@
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Grievances</span>
                     <h3 id="statTotal" class="text-2xl font-black text-white mt-1">0</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Logged from citizens</p>
+                    <p class="text-[10px] text-slate-500 mt-1">From citizens</p>
                 </div>
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-rose-400">Pending Triage</span>
                     <h3 id="statPending" class="text-2xl font-black text-rose-500 mt-1">0</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Requires crew dispatch</p>
+                    <p class="text-[10px] text-slate-500 mt-1">Needs crew dispatch</p>
                 </div>
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Active Dispatches</span>
-                    <h3 id="statDispatched" class="text-2xl font-black text-amber-400 mt-1">0</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Sanitation crew assigned</p>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Municipal Dustbins</span>
+                    <h3 id="statTotalBins" class="text-2xl font-black text-amber-400 mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Geotagged in Kopargaon</p>
                 </div>
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400">Resolved Cleanups</span>
-                    <h3 id="statResolved" class="text-2xl font-black text-emerald-400 mt-1">0</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Verified with after-proof</p>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400">On-Duty Sanitation Crew</span>
+                    <h3 id="statOnDutyWorkers" class="text-2xl font-black text-emerald-400 mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Active on field</p>
                 </div>
             </div>
 
-            <!-- VIEW 1: OVERVIEW & TRIAGE -->
+            <!-- VIEW 1: OVERVIEW & MAP TRIAGE -->
             <div id="viewOverview" class="space-y-6">
-                <!-- Map & Live Stream Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
-                    <!-- Left: Interactive Kopargaon Map -->
-                    <div class="lg:col-span-7 bg-[#160407] border border-rose-950/80 rounded-3xl p-4 flex flex-col space-y-3">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                                <span>🗺️</span> Kopargaon Sanitation Geo-Map
+                <!-- Map Header & Map Container -->
+                <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                                <span>🗺️</span> Kopargaon Geographic Command Map
                             </h2>
-                            <div class="flex items-center gap-2 text-[10px] font-bold">
-                                <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Pending</span>
-                                <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Dispatched</span>
-                                <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Resolved</span>
-                            </div>
+                            <p class="text-[11px] text-slate-400">Live citizen grievance markers & municipal dustbins</p>
                         </div>
-                        <div class="h-80 w-full rounded-2xl overflow-hidden border border-rose-950/80">
-                            <div id="adminLiveMap" class="w-full h-full"></div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openDustbinModal(null)" class="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 active:scale-95 transition-all shadow-md">
+                                <span>📍</span>
+                                <span>Choose & Place Bin on Map</span>
+                            </button>
+                            <div class="flex items-center gap-2 text-[10px] font-bold pl-2 border-l border-rose-950/80">
+                                <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Unclean</span>
+                                <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-500"></span> In Progress</span>
+                                <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Cleaned</span>
+                                <span class="flex items-center gap-1 text-sky-400"><span class="w-2 h-2 rounded-full bg-sky-500"></span> City Dustbin</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Quick Dispatch Feed -->
-                    <div class="lg:col-span-5 bg-[#160407] border border-rose-950/80 rounded-3xl p-5 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between pb-3 border-b border-rose-950/60">
-                                <h3 class="text-xs font-black uppercase tracking-wider text-slate-300">Fast Operations Desk</h3>
-                                <span class="text-[10px] text-slate-500">Live sync enabled</span>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-3 leading-relaxed">
-                                Review resident complaints submitted via the Citizen App in real time. Inspect photographic evidence, examine exact GPS coordinates on Google Maps, and dispatch on-duty sanitation personnel directly to the spot.
-                            </p>
-                        </div>
-                        <div class="p-3.5 bg-rose-950/30 border border-rose-900/40 rounded-2xl mt-4">
-                            <span class="text-[10px] font-black uppercase text-rose-400 block">Citizen Channel Hook</span>
-                            <span class="text-xs font-bold text-white mt-1 block">Synced with Citizen Portal Submissions</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Complaints from the citizen portal are added to the triage ledger automatically.</span>
-                        </div>
+                    <div class="h-96 w-full rounded-2xl overflow-hidden border border-rose-950/80 relative">
+                        <div id="adminLiveMap" class="w-full h-full"></div>
                     </div>
                 </div>
 
@@ -201,7 +202,7 @@
                 <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-4">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xs font-black uppercase tracking-wider text-slate-300">
-                            Grievances Triage & Dispatch Ledger
+                            Citizen Grievances Ledger
                         </h2>
                         <span id="complaintTableCount" class="text-xs bg-slate-900 border border-rose-950 px-2.5 py-1 rounded-full font-bold text-slate-300">
                             0 Total
@@ -229,14 +230,48 @@
                 </div>
             </div>
 
-            <!-- VIEW 2: SANITATION CREW & FLEET DIRECTORY -->
+            <!-- VIEW 2: MUNICIPAL DUSTBINS MANAGEMENT -->
+            <div id="viewDustbins" class="hidden space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-black text-white">Municipal Dustbins & Collection Stations</h2>
+                        <p class="text-xs text-slate-400">Choose placement position on map, edit info, or delete civic dustbins</p>
+                    </div>
+                    <button onclick="openDustbinModal(null)" class="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5">
+                        <span>📍</span>
+                        <span>Place New Dustbin on Map</span>
+                    </button>
+                </div>
+
+                <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-rose-950/60">
+                                <tr>
+                                    <th class="p-3">Bin ID</th>
+                                    <th class="p-3">Name & Landmark</th>
+                                    <th class="p-3">Coordinates</th>
+                                    <th class="p-3">Capacity</th>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dustbinsTableBody" class="divide-y divide-rose-950/40">
+                                <!-- Dynamically populated without fill level -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: SANITATION CREW & FLEET MANAGEMENT -->
             <div id="viewWorkers" class="hidden space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-sm font-black text-white">Municipal Sanitation Fleet & Crew Roster</h2>
-                        <p class="text-xs text-slate-400">Monitor active field staff, assigned vehicles, and real-time duty status</p>
+                        <h2 class="text-sm font-black text-white">Sanitation Crew & Fleet Directory</h2>
+                        <p class="text-xs text-slate-400">Register new crew, edit details, assign vehicles, or remove personnel</p>
                     </div>
-                    <button onclick="promptAddWorker()" class="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all">
+                    <button onclick="openWorkerModal(null)" class="px-4 py-2 bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all">
                         + Register New Crew Member
                     </button>
                 </div>
@@ -246,6 +281,146 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- ================= DUSTBIN PLACEMENT & EDIT MODAL ================= -->
+    <div id="dustbinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#160407] border border-rose-900/60 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-rose-950 pb-3">
+                <h3 class="text-sm font-black text-white" id="dustbinModalTitle">Choose & Place Dustbin on Map</h3>
+                <button onclick="closeDustbinModal()" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+            </div>
+            
+            <form onsubmit="handleSaveDustbin(event)" class="space-y-3.5">
+                <input type="hidden" id="editBinId">
+
+                <!-- Interactive Mini-Map Position Picker -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[10px] font-black uppercase text-slate-300 flex items-center gap-1.5">
+                            <span class="w-4 h-4 rounded bg-rose-600 text-white flex items-center justify-center text-[9px]">📍</span>
+                            Pinpoint Position on Kopargaon Map
+                        </label>
+                        <span class="text-[10px] text-sky-400 font-bold">Tap or drag pin to position</span>
+                    </div>
+
+                    <!-- Picker Map Viewport -->
+                    <div class="h-48 w-full rounded-2xl overflow-hidden border border-rose-950 relative shadow-inner">
+                        <div id="binPickerMap" class="w-full h-full"></div>
+                    </div>
+
+                    <!-- Quick Landmark Snaps -->
+                    <div class="flex gap-1.5 overflow-x-auto py-1">
+                        <button type="button" onclick="setPickerPosition([19.8841, 74.4788], 'Bus Stand Depo')" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[9px] font-bold whitespace-nowrap">
+                            🚌 Bus Stand
+                        </button>
+                        <button type="button" onclick="setPickerPosition([19.901689, 74.494780], 'Station Road')" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[9px] font-bold whitespace-nowrap">
+                            🚆 Station Road
+                        </button>
+                        <button type="button" onclick="setPickerPosition([19.8820, 74.4690], 'Sanjivani College')" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[9px] font-bold whitespace-nowrap">
+                            🎓 Sanjivani Gate
+                        </button>
+                        <button type="button" onclick="setPickerPosition([19.8912, 74.4768], 'Tilak Nagar Market')" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[9px] font-bold whitespace-nowrap">
+                            🏪 Tilak Nagar
+                        </button>
+                        <button type="button" onclick="setPickerPosition([19.8858, 74.4855], 'Godavari Ghat Bridge')" class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[9px] font-bold whitespace-nowrap">
+                            🌉 Godavari Ghat
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Area / Landmark Name</label>
+                    <input type="text" id="binNameInput" placeholder="e.g. Shivaji Chowk Corner Ward 2" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none focus:ring-1 focus:ring-rose-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Selected Latitude</label>
+                        <input type="number" step="any" id="binLatInput" required class="w-full mt-1 px-3 py-2 text-xs font-mono font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none" onchange="syncPickerFromInputs()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Selected Longitude</label>
+                        <input type="number" step="any" id="binLngInput" required class="w-full mt-1 px-3 py-2 text-xs font-mono font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none" onchange="syncPickerFromInputs()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Bin Capacity</label>
+                        <select id="binCapacityInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                            <option value="240L">240 Liters (Small Ward)</option>
+                            <option value="500L" selected>500 Liters (Standard)</option>
+                            <option value="1100L">1100 Liters (High Volume)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Waste Segregation Category</label>
+                        <select id="binCategoryInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                            <option value="Dry & Plastic Waste">Dry & Plastic Waste</option>
+                            <option value="Wet & Biodegradable">Wet & Biodegradable</option>
+                            <option value="Mixed Municipal Waste" selected>Mixed Municipal Waste</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeDustbinModal()" class="flex-1 py-2.5 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">
+                        Confirm & Place Dustbin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= WORKER ADD / EDIT MODAL ================= -->
+    <div id="workerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#160407] border border-rose-900/60 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-rose-950 pb-3">
+                <h3 class="text-sm font-black text-white" id="workerModalTitle">Register Crew Member</h3>
+                <button onclick="closeWorkerModal()" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+            </div>
+            
+            <form onsubmit="handleSaveWorker(event)" class="space-y-3">
+                <input type="hidden" id="editWorkerId">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Full Name</label>
+                    <input type="text" id="workerNameInput" placeholder="e.g. Ramesh Kadam" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none focus:ring-1 focus:ring-rose-500">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Phone Number (10 Digits)</label>
+                    <input type="tel" id="workerPhoneInput" placeholder="9822XXXXXX" pattern="[0-9]{10}" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none focus:ring-1 focus:ring-rose-500">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Assigned Ward / Zone</label>
+                    <input type="text" id="workerWardInput" placeholder="e.g. Ward 3 - Godavari Ghat" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Vehicle Identification Number</label>
+                    <input type="text" id="workerVehicleInput" placeholder="e.g. MH-17-AG-4421" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Duty Status</label>
+                    <select id="workerStatusInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                        <option value="On Duty">On Duty</option>
+                        <option value="On Break">On Break</option>
+                        <option value="Off Duty">Off Duty</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeWorkerModal()" class="flex-1 py-2.5 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">
+                        Save Worker
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- ================= DISPATCH WORKER MODAL ================= -->
@@ -259,7 +434,7 @@
                 <p class="text-xs text-slate-300" id="dispatchModalSubtitle">Assign a crew member to ticket KPG-XXXX</p>
             </div>
             <div class="space-y-2 max-h-60 overflow-y-auto pr-1" id="dispatchWorkerList">
-                <!-- Available on-duty crew options -->
+                <!-- Radio options -->
             </div>
             <div class="flex gap-2 pt-2">
                 <button onclick="closeDispatchModal()" class="flex-1 py-2.5 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl">
@@ -282,22 +457,37 @@
         const ADMIN_CONFIG = {
             KOPARGAON_COORDS: [19.8841, 74.4788],
             CITIZEN_STORAGE_KEY: 'ecoclean_citizen_reports',
-            SHARED_STORAGE_KEY: 'ecoclean_shared_complaints'
+            SHARED_STORAGE_KEY: 'ecoclean_shared_complaints',
+            DUSTBINS_STORAGE_KEY: 'ecoclean_municipal_dustbins',
+            WORKERS_STORAGE_KEY: 'ecoclean_municipal_workers'
         };
 
         let map = null;
         let mapMarkers = [];
+        let binMarkers = [];
         let selectedComplaintIdForDispatch = null;
 
+        // Mini-Map Position Picker State
+        let pickerMapInstance = null;
+        let pickerMarker = null;
+
         // Municipal Workers Directory
-        let workers = [
+        let workers = JSON.parse(localStorage.getItem(ADMIN_CONFIG.WORKERS_STORAGE_KEY) || 'null') || [
             { id: "W101", name: "Raju Shinde", phone: "9822110022", vehicle: "MH-17-AG-4421", ward: "Ward 1 - Station Road", status: "On Duty", activeTasks: 1, completed: 34 },
             { id: "W102", name: "Sunita Jadhav", phone: "9822110033", vehicle: "MH-17-AG-1092", ward: "Ward 2 - Market Chowk", status: "On Duty", activeTasks: 0, completed: 28 },
             { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - Godavari Ghat", status: "On Duty", activeTasks: 1, completed: 45 },
             { id: "W104", name: "Ramesh Sonawane", phone: "9822110055", vehicle: "MH-17-AG-3011", ward: "Ward 4 - Yeola Corner", status: "Off Duty", activeTasks: 0, completed: 19 }
         ];
 
-        // Grievances Master Records (Default Seed + LocalStorage cross-app sync)
+        // Municipal Dustbins Registry (without fill level)
+        let municipalDustbins = JSON.parse(localStorage.getItem(ADMIN_CONFIG.DUSTBINS_STORAGE_KEY) || 'null') || [
+            { id: "BIN-101", name: "Kopargaon Bus Stand Depo", coords: [19.8841, 74.4788], capacity: "1100L", category: "Mixed Municipal Waste" },
+            { id: "BIN-102", name: "Tilak Nagar Vegetable Market", coords: [19.8912, 74.4768], capacity: "500L", category: "Wet & Biodegradable" },
+            { id: "BIN-103", name: "Godavari River Bridge North", coords: [19.8858, 74.4855], capacity: "500L", category: "Mixed Municipal Waste" },
+            { id: "BIN-104", name: "Sanjivani College Main Gate", coords: [19.8820, 74.4690], capacity: "240L", category: "Dry & Plastic Waste" }
+        ];
+
+        // Grievances Master Record
         let complaints = JSON.parse(localStorage.getItem(ADMIN_CONFIG.SHARED_STORAGE_KEY) || 'null') || [
             {
                 id: "KPG-8801",
@@ -360,10 +550,11 @@
             syncFromCitizenStorage();
             updateMetrics();
             renderComplaintsTable();
+            renderDustbinsTable();
             renderWorkersRoster();
             setTimeout(initMap, 200);
 
-            // Listen for new reports from the citizen portal across tabs
+            // Cross-tab storage listeners
             window.addEventListener('storage', (e) => {
                 if (e.key === ADMIN_CONFIG.CITIZEN_STORAGE_KEY || e.key === ADMIN_CONFIG.SHARED_STORAGE_KEY) {
                     syncFromCitizenStorage();
@@ -407,16 +598,26 @@
             localStorage.setItem(ADMIN_CONFIG.SHARED_STORAGE_KEY, JSON.stringify(complaints));
         }
 
+        function saveDustbins() {
+            localStorage.setItem(ADMIN_CONFIG.DUSTBINS_STORAGE_KEY, JSON.stringify(municipalDustbins));
+        }
+
+        function saveWorkers() {
+            localStorage.setItem(ADMIN_CONFIG.WORKERS_STORAGE_KEY, JSON.stringify(workers));
+        }
+
         function updateMetrics() {
             document.getElementById('statTotal').innerText = complaints.length;
             document.getElementById('statPending').innerText = complaints.filter(c => c.status === 'Pending').length;
-            document.getElementById('statDispatched').innerText = complaints.filter(c => c.status === 'Dispatched').length;
-            document.getElementById('statResolved').innerText = complaints.filter(c => c.status === 'Resolved').length;
+            document.getElementById('statTotalBins').innerText = municipalDustbins.length;
+            document.getElementById('totalBinsCountBadge').innerText = municipalDustbins.length;
+            const onDutyWorkers = workers.filter(w => w.status === 'On Duty').length;
+            document.getElementById('statOnDutyWorkers').innerText = onDutyWorkers;
+            document.getElementById('activeCrewCount').innerText = onDutyWorkers;
             document.getElementById('complaintTableCount').innerText = `${complaints.length} Total`;
-            document.getElementById('activeCrewCount').innerText = workers.filter(w => w.status === 'On Duty').length;
         }
 
-        /* ------------------ LEAFLET GEO-MAP ------------------ */
+        /* ------------------ LEAFLET MAIN MAP ------------------ */
         function initMap() {
             if (!map) {
                 map = L.map('adminLiveMap', { zoomControl: true }).setView(ADMIN_CONFIG.KOPARGAON_COORDS, 14);
@@ -429,22 +630,26 @@
 
         function updateMapMarkers() {
             if (!map) return;
-            mapMarkers.forEach(m => map.removeLayer(m));
-            mapMarkers = [];
 
+            mapMarkers.forEach(m => map.removeLayer(m));
+            binMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+            binMarkers = [];
+
+            // 1. Complaints Pins
             complaints.forEach(item => {
                 let colorClass = 'bg-rose-600';
                 if (item.status === 'Dispatched') colorClass = 'bg-amber-500';
                 if (item.status === 'Resolved') colorClass = 'bg-emerald-600';
 
                 const icon = L.divIcon({
-                    html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">🗑️</div>`,
+                    html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">⚠️</div>`,
                     className: '', iconSize: [28, 28]
                 });
 
                 const marker = L.marker(item.coords, { icon }).addTo(map);
                 marker.bindPopup(`
-                    <div class="p-2 max-w-[200px] font-sans text-slate-900 space-y-1.5">
+                    <div class="p-2 max-w-[210px] font-sans text-slate-900 space-y-1.5">
                         <div class="flex items-center justify-between text-[10px] font-bold">
                             <span>${item.id}</span>
                             <span class="font-extrabold uppercase">${item.status}</span>
@@ -452,20 +657,398 @@
                         <img src="${item.beforeImage}" class="w-full h-20 object-cover rounded-lg border">
                         <p class="text-[11px] font-bold text-slate-800">${item.landmark}</p>
                         <p class="text-[10px] text-slate-600 line-clamp-2">${item.comment}</p>
-                        <a href="https://www.google.com/maps?q=${item.coords[0]},${item.coords[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline block pt-0.5">Open in Google Maps ↗</a>
+                        <a href="https://www.google.com/maps?q=${item.coords[0]},${item.coords[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline block pt-0.5">Google Maps ↗</a>
                     </div>
                 `);
                 mapMarkers.push(marker);
             });
+
+            // 2. Dustbins Pins (uniform sky blue marker)
+            municipalDustbins.forEach(bin => {
+                const binIcon = L.divIcon({
+                    html: `<div class="w-7 h-7 rounded-xl bg-sky-500 border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-xl">🗑️</div>`,
+                    className: '', iconSize: [28, 28]
+                });
+
+                const marker = L.marker(bin.coords, { icon: binIcon }).addTo(map);
+                marker.bindPopup(`
+                    <div class="p-2 max-w-[200px] font-sans text-slate-900 space-y-1">
+                        <div class="flex items-center justify-between text-[10px] font-bold">
+                            <span class="text-slate-500 font-mono">${bin.id}</span>
+                            <span class="font-extrabold text-sky-700">${bin.capacity}</span>
+                        </div>
+                        <h4 class="font-extrabold text-xs text-slate-900">${bin.name}</h4>
+                        <p class="text-[9px] text-slate-500">${bin.category}</p>
+                        <div class="flex gap-1.5 pt-1.5 border-t border-slate-200">
+                            <button onclick="openDustbinModal('${bin.id}')" class="flex-1 py-1 bg-slate-800 text-white rounded text-[9px] font-bold">Edit</button>
+                            <button onclick="deleteDustbin('${bin.id}')" class="flex-1 py-1 bg-rose-600 text-white rounded text-[9px] font-bold">Delete</button>
+                        </div>
+                    </div>
+                `);
+                binMarkers.push(marker);
+            });
         }
 
-        /* ------------------ COMPLAINTS TABLE ------------------ */
+        /* ------------------ MINI-MAP POSITION PICKER ENGINE ------------------ */
+        function initOrUpdatePickerMap(initialCoords) {
+            const container = document.getElementById('binPickerMap');
+            if (!container) return;
+
+            if (!pickerMapInstance) {
+                pickerMapInstance = L.map('binPickerMap', {
+                    zoomControl: true,
+                    scrollWheelZoom: true
+                }).setView(initialCoords, 16);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(pickerMapInstance);
+
+                const pickerIcon = L.divIcon({
+                    html: `<div class="w-8 h-8 rounded-full bg-sky-500 border-2 border-white text-white flex items-center justify-center text-sm font-black shadow-2xl pulsing-bin-picker cursor-pointer">🗑️</div>`,
+                    className: '',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                pickerMarker = L.marker(initialCoords, { icon: pickerIcon, draggable: true }).addTo(pickerMapInstance);
+
+                // Update inputs on drag
+                pickerMarker.on('dragend', (e) => {
+                    const pos = e.target.getLatLng();
+                    updatePickerInputs(pos.lat, pos.lng);
+                });
+
+                // Update on click anywhere on picker map
+                pickerMapInstance.on('click', (e) => {
+                    setPickerPosition([e.latlng.lat, e.latlng.lng]);
+                });
+            } else {
+                pickerMapInstance.invalidateSize();
+                setPickerPosition(initialCoords);
+            }
+        }
+
+        function setPickerPosition(coords, landmarkHint = null) {
+            if (pickerMapInstance && pickerMarker) {
+                pickerMarker.setLatLng(coords);
+                pickerMapInstance.setView(coords, 17, { animate: true });
+                updatePickerInputs(coords[0], coords[1]);
+                if (landmarkHint) {
+                    const nameInput = document.getElementById('binNameInput');
+                    if (nameInput && !nameInput.value) {
+                        nameInput.value = landmarkHint;
+                    }
+                }
+            }
+        }
+
+        function updatePickerInputs(lat, lng) {
+            document.getElementById('binLatInput').value = lat.toFixed(6);
+            document.getElementById('binLngInput').value = lng.toFixed(6);
+        }
+
+        function syncPickerFromInputs() {
+            const lat = parseFloat(document.getElementById('binLatInput').value);
+            const lng = parseFloat(document.getElementById('binLngInput').value);
+            if (!isNaN(lat) && !isNaN(lng) && pickerMapInstance && pickerMarker) {
+                pickerMarker.setLatLng([lat, lng]);
+                pickerMapInstance.setView([lat, lng], 17);
+            }
+        }
+
+        /* ------------------ DUSTBINS CRUD ------------------ */
+        function renderDustbinsTable() {
+            const tbody = document.getElementById('dustbinsTableBody');
+            tbody.innerHTML = "";
+
+            if (municipalDustbins.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 text-xs">No municipal dustbins registered yet.</td></tr>`;
+                return;
+            }
+
+            municipalDustbins.forEach(bin => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-rose-950/20 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="p-3 font-mono text-slate-400">${bin.id}</td>
+                    <td class="p-3 font-bold text-white">${bin.name}</td>
+                    <td class="p-3 font-mono text-slate-400 text-[10px]">${bin.coords[0].toFixed(5)}, ${bin.coords[1].toFixed(5)}</td>
+                    <td class="p-3 font-bold text-slate-200">${bin.capacity}</td>
+                    <td class="p-3 text-slate-300 text-[11px]">${bin.category}</td>
+                    <td class="p-3 text-right space-x-1.5">
+                        <button onclick="focusMapOnBin([${bin.coords[0]}, ${bin.coords[1]}])" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-[10px] rounded-lg font-bold">
+                            🗺️ Map
+                        </button>
+                        <button onclick="openDustbinModal('${bin.id}')" class="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-white text-[10px] rounded-lg font-bold">
+                            ✏️ Edit & Reposition
+                        </button>
+                        <button onclick="deleteDustbin('${bin.id}')" class="px-2.5 py-1 bg-rose-800 hover:bg-rose-700 text-white text-[10px] rounded-lg font-bold">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openDustbinModal(binId = null, defaultCoords = null) {
+            const modal = document.getElementById('dustbinModal');
+            const title = document.getElementById('dustbinModalTitle');
+            const editIdInput = document.getElementById('editBinId');
+            const nameInput = document.getElementById('binNameInput');
+            const capInput = document.getElementById('binCapacityInput');
+            const catInput = document.getElementById('binCategoryInput');
+
+            let targetCoords = defaultCoords || ADMIN_CONFIG.KOPARGAON_COORDS;
+
+            if (binId) {
+                const b = municipalDustbins.find(item => item.id === binId);
+                if (!b) return;
+                title.innerText = `Edit & Reposition Dustbin (${b.id})`;
+                editIdInput.value = b.id;
+                nameInput.value = b.name;
+                capInput.value = b.capacity;
+                catInput.value = b.category;
+                targetCoords = b.coords;
+            } else {
+                title.innerText = "Choose & Place New Dustbin on Map";
+                editIdInput.value = "";
+                nameInput.value = "";
+                capInput.value = "500L";
+                catInput.value = "Mixed Municipal Waste";
+            }
+
+            updatePickerInputs(targetCoords[0], targetCoords[1]);
+            modal.classList.remove('hidden');
+
+            // Initialize or update mini-map viewport
+            setTimeout(() => {
+                initOrUpdatePickerMap(targetCoords);
+            }, 180);
+        }
+
+        function closeDustbinModal() {
+            document.getElementById('dustbinModal').classList.add('hidden');
+        }
+
+        function handleSaveDustbin(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editBinId').value;
+            const name = document.getElementById('binNameInput').value.trim();
+            const lat = parseFloat(document.getElementById('binLatInput').value);
+            const lng = parseFloat(document.getElementById('binLngInput').value);
+            const cap = document.getElementById('binCapacityInput').value;
+            const cat = document.getElementById('binCategoryInput').value;
+
+            if (editId) {
+                const b = municipalDustbins.find(item => item.id === editId);
+                if (b) {
+                    b.name = name;
+                    b.coords = [lat, lng];
+                    b.capacity = cap;
+                    b.category = cat;
+                    showToast(`Updated Dustbin: ${b.name}`);
+                }
+            } else {
+                const newId = `BIN-${Math.floor(100 + Math.random() * 900)}`;
+                municipalDustbins.push({
+                    id: newId,
+                    name: name,
+                    coords: [lat, lng],
+                    capacity: cap,
+                    category: cat
+                });
+                showToast(`New Dustbin Positioned: ${name}`);
+            }
+
+            saveDustbins();
+            updateMetrics();
+            renderDustbinsTable();
+            updateMapMarkers();
+            closeDustbinModal();
+        }
+
+        function deleteDustbin(binId) {
+            if (confirm(`Are you sure you want to delete dustbin ${binId}?`)) {
+                municipalDustbins = municipalDustbins.filter(b => b.id !== binId);
+                saveDustbins();
+                updateMetrics();
+                renderDustbinsTable();
+                updateMapMarkers();
+                showToast(`Dustbin ${binId} deleted`);
+            }
+        }
+
+        function focusMapOnBin(coords) {
+            switchAdminTab('overview');
+            if (map) {
+                map.setView(coords, 18, { animate: true });
+                showToast("Centered map on dustbin");
+            }
+        }
+
+        /* ------------------ WORKERS CRUD ------------------ */
+        function renderWorkersRoster() {
+            const grid = document.getElementById('workersRosterGrid');
+            grid.innerHTML = "";
+
+            if (workers.length === 0) {
+                grid.innerHTML = `<div class="col-span-3 text-center py-10 text-xs text-slate-500">No personnel registered in fleet.</div>`;
+                return;
+            }
+
+            workers.forEach(w => {
+                const card = document.createElement('div');
+                card.className = "bg-[#160407] border border-rose-950/80 rounded-2xl p-4 space-y-3 shadow-sm flex flex-col justify-between";
+
+                let statusBadgeColor = w.status === 'On Duty' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : (w.status === 'On Break' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-mono text-slate-500">${w.id}</span>
+                                <h3 class="font-extrabold text-sm text-white">${w.name}</h3>
+                            </div>
+                            <button onclick="toggleWorkerDuty('${w.id}')" title="Click to cycle status" class="px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusBadgeColor} active:scale-95 transition-all">
+                                ${w.status}
+                            </button>
+                        </div>
+                        <div class="text-xs space-y-1 text-slate-400 mt-2">
+                            <p>📍 Ward: <strong class="text-slate-200">${w.ward}</strong></p>
+                            <p>🚜 Vehicle: <strong class="text-slate-200">${w.vehicle}</strong></p>
+                            <p>📞 Phone: <strong class="text-slate-200">${w.phone}</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-rose-950/60 space-y-2">
+                        <div class="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                            <span>Active Tasks: <strong class="text-white">${w.activeTasks}</strong></span>
+                            <span>Cleanups Done: <strong class="text-emerald-400">${w.completed}</strong></span>
+                        </div>
+                        <div class="flex gap-1.5 pt-1">
+                            <button onclick="openWorkerModal('${w.id}')" class="flex-1 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded-lg text-xs font-bold active:scale-95 transition-all">
+                                ✏️ Edit Info
+                            </button>
+                            <button onclick="deleteWorker('${w.id}')" class="py-1.5 px-3 bg-rose-900/60 hover:bg-rose-800 text-rose-200 rounded-lg text-xs font-bold active:scale-95 transition-all">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openWorkerModal(workerId = null) {
+            const modal = document.getElementById('workerModal');
+            const title = document.getElementById('workerModalTitle');
+            const editIdInput = document.getElementById('editWorkerId');
+            const nameInput = document.getElementById('workerNameInput');
+            const phoneInput = document.getElementById('workerPhoneInput');
+            const wardInput = document.getElementById('workerWardInput');
+            const vehInput = document.getElementById('workerVehicleInput');
+            const statusInput = document.getElementById('workerStatusInput');
+
+            if (workerId) {
+                const w = workers.find(item => item.id === workerId);
+                if (!w) return;
+                title.innerText = `Edit Sanitation Worker (${w.id})`;
+                editIdInput.value = w.id;
+                nameInput.value = w.name;
+                phoneInput.value = w.phone;
+                wardInput.value = w.ward;
+                vehInput.value = w.vehicle;
+                statusInput.value = w.status;
+            } else {
+                title.innerText = "Register New Sanitation Crew";
+                editIdInput.value = "";
+                nameInput.value = "";
+                phoneInput.value = "";
+                wardInput.value = "Ward 1 - Kopargaon";
+                vehInput.value = "MH-17-AG-";
+                statusInput.value = "On Duty";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeWorkerModal() {
+            document.getElementById('workerModal').classList.add('hidden');
+        }
+
+        function handleSaveWorker(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editWorkerId').value;
+            const name = document.getElementById('workerNameInput').value.trim();
+            const phone = document.getElementById('workerPhoneInput').value.trim();
+            const ward = document.getElementById('workerWardInput').value.trim();
+            const vehicle = document.getElementById('workerVehicleInput').value.trim();
+            const status = document.getElementById('workerStatusInput').value;
+
+            if (editId) {
+                const w = workers.find(item => item.id === editId);
+                if (w) {
+                    w.name = name;
+                    w.phone = phone;
+                    w.ward = ward;
+                    w.vehicle = vehicle;
+                    w.status = status;
+                    showToast(`Updated Worker: ${w.name}`);
+                }
+            } else {
+                const newId = `W10${workers.length + 1}`;
+                workers.push({
+                    id: newId,
+                    name: name,
+                    phone: phone,
+                    ward: ward,
+                    vehicle: vehicle,
+                    status: status,
+                    activeTasks: 0,
+                    completed: 0
+                });
+                showToast(`Registered Worker: ${name}`);
+            }
+
+            saveWorkers();
+            updateMetrics();
+            renderWorkersRoster();
+            closeWorkerModal();
+        }
+
+        function deleteWorker(workerId) {
+            const w = workers.find(item => item.id === workerId);
+            if (w && confirm(`Are you sure you want to remove ${w.name} from the roster?`)) {
+                workers = workers.filter(item => item.id !== workerId);
+                saveWorkers();
+                updateMetrics();
+                renderWorkersRoster();
+                showToast(`Worker ${w.name} removed from fleet`);
+            }
+        }
+
+        function toggleWorkerDuty(id) {
+            const w = workers.find(item => item.id === id);
+            if (w) {
+                if (w.status === 'On Duty') w.status = 'On Break';
+                else if (w.status === 'On Break') w.status = 'Off Duty';
+                else w.status = 'On Duty';
+
+                saveWorkers();
+                renderWorkersRoster();
+                updateMetrics();
+                showToast(`${w.name} is now ${w.status}`);
+            }
+        }
+
+        /* ------------------ COMPLAINTS DISPATCH ------------------ */
         function renderComplaintsTable() {
             const tbody = document.getElementById('complaintsTableBody');
             tbody.innerHTML = "";
 
             if (complaints.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No grievances logged yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No grievances logged.</td></tr>`;
                 return;
             }
 
@@ -513,7 +1096,7 @@
                         ` : ''}
                         ${item.status === 'Dispatched' ? `
                             <button onclick="markAdminResolved('${item.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm active:scale-95 transition-all">
-                                ✓ Mark Resolved
+                                ✓ Mark Cleaned
                             </button>
                         ` : ''}
                         ${item.status === 'Resolved' ? `
@@ -525,10 +1108,9 @@
             });
         }
 
-        /* ------------------ DISPATCH MODAL ------------------ */
         function openDispatchModal(complaintId) {
             selectedComplaintIdForDispatch = complaintId;
-            document.getElementById('dispatchModalSubtitle').innerText = `Assign municipal field worker to ticket ${complaintId}`;
+            document.getElementById('dispatchModalSubtitle').innerText = `Assign sanitation personnel to ticket ${complaintId}`;
             const list = document.getElementById('dispatchWorkerList');
             list.innerHTML = "";
 
@@ -542,7 +1124,7 @@
                     label.innerHTML = `
                         <div>
                             <span class="font-bold text-xs text-white block">👷 ${w.name} (${w.vehicle})</span>
-                            <span class="text-[10px] text-slate-400">${w.ward} • Active Tasks: ${w.activeTasks}</span>
+                            <span class="text-[10px] text-slate-400">${w.ward} • Current Load: ${w.activeTasks}</span>
                         </div>
                         <input type="radio" name="selectedWorkerRadio" value="${w.name}" class="text-rose-600 focus:ring-rose-500">
                     `;
@@ -570,11 +1152,11 @@
                 item.status = "Dispatched";
                 item.assignedWorker = selected.value;
 
-                // Increment worker's task counter
                 const workerObj = workers.find(w => w.name === selected.value);
                 if (workerObj) workerObj.activeTasks++;
 
                 saveComplaints();
+                saveWorkers();
                 updateMetrics();
                 renderComplaintsTable();
                 renderWorkersRoster();
@@ -599,92 +1181,32 @@
             }
         }
 
-        /* ------------------ WORKERS ROSTER ------------------ */
-        function renderWorkersRoster() {
-            const grid = document.getElementById('workersRosterGrid');
-            grid.innerHTML = "";
-
-            workers.forEach(w => {
-                const card = document.createElement('div');
-                card.className = "bg-[#160407] border border-rose-950/80 rounded-2xl p-4 space-y-3 shadow-sm";
-
-                let statusColor = w.status === 'On Duty' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700';
-
-                card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-mono text-slate-500">${w.id}</span>
-                            <h3 class="font-extrabold text-sm text-white">${w.name}</h3>
-                        </div>
-                        <button onclick="toggleWorkerDuty('${w.id}')" class="px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusColor} active:scale-95 transition-all">
-                            ${w.status}
-                        </button>
-                    </div>
-                    <div class="text-xs space-y-1 text-slate-400">
-                        <p>📍 <strong class="text-slate-200">${w.ward}</strong></p>
-                        <p>🚜 Vehicle: <strong class="text-slate-200">${w.vehicle}</strong></p>
-                        <p>📞 Phone: <strong class="text-slate-200">${w.phone}</strong></p>
-                    </div>
-                    <div class="flex items-center justify-between pt-2 border-t border-rose-950/60 text-[10px] font-bold text-slate-400">
-                        <span>Active Tasks: <strong class="text-white">${w.activeTasks}</strong></span>
-                        <span>Cleanups Done: <strong class="text-emerald-400">${w.completed}</strong></span>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function toggleWorkerDuty(id) {
-            const w = workers.find(item => item.id === id);
-            if (w) {
-                w.status = (w.status === 'On Duty') ? 'Off Duty' : 'On Duty';
-                renderWorkersRoster();
-                updateMetrics();
-                showToast(`${w.name} status changed to ${w.status}`);
-            }
-        }
-
-        function promptAddWorker() {
-            const name = prompt("Enter Worker Full Name:");
-            if (!name) return;
-            const ward = prompt("Enter Assigned Ward / Area:", "Ward 1 - Kopargaon");
-            const vehicle = prompt("Enter Vehicle Identification Plate:", "MH-17-AG-XXXX");
-
-            const newWorker = {
-                id: `W10${workers.length + 1}`,
-                name: name,
-                phone: "9822000000",
-                vehicle: vehicle || "MH-17-AG-0000",
-                ward: ward || "General Ward",
-                status: "On Duty",
-                activeTasks: 0,
-                completed: 0
-            };
-
-            workers.push(newWorker);
-            renderWorkersRoster();
-            updateMetrics();
-            showToast(`Worker ${name} successfully registered!`);
-        }
-
         /* ------------------ TABS & LIGHTBOX ------------------ */
         function switchAdminTab(tab) {
             const viewOverview = document.getElementById('viewOverview');
+            const viewDustbins = document.getElementById('viewDustbins');
             const viewWorkers = document.getElementById('viewWorkers');
             const btnOverview = document.getElementById('tabBtnOverview');
+            const btnDustbins = document.getElementById('tabBtnDustbins');
             const btnWorkers = document.getElementById('tabBtnWorkers');
+
+            [viewOverview, viewDustbins, viewWorkers].forEach(v => v.classList.add('hidden'));
+            [btnOverview, btnDustbins, btnWorkers].forEach(b => {
+                b.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white";
+            });
 
             if (tab === 'overview') {
                 viewOverview.classList.remove('hidden');
-                viewWorkers.classList.add('hidden');
                 btnOverview.className = "px-3 py-1.5 rounded-lg bg-rose-700 text-white shadow-sm";
-                btnWorkers.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white";
                 setTimeout(() => map && map.invalidateSize(), 200);
-            } else {
-                viewOverview.classList.add('hidden');
+            } else if (tab === 'dustbins') {
+                viewDustbins.classList.remove('hidden');
+                btnDustbins.className = "px-3 py-1.5 rounded-lg bg-rose-700 text-white shadow-sm";
+                renderDustbinsTable();
+            } else if (tab === 'workers') {
                 viewWorkers.classList.remove('hidden');
                 btnWorkers.className = "px-3 py-1.5 rounded-lg bg-rose-700 text-white shadow-sm";
-                btnOverview.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-white";
+                renderWorkersRoster();
             }
         }
 
