@@ -274,7 +274,7 @@
                 <input type="hidden" id="editBinId">
 
                 <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase text-slate-300 block">Pinpoint Position on Map</label>
+                    <label class="text-[10px] font-black uppercase text-slate-300 block">Pinpoint Position on Map (Tap to drop)</label>
                     <div class="h-48 w-full rounded-2xl overflow-hidden border border-rose-950 relative shadow-inner">
                         <div id="binPickerMap" class="w-full h-full"></div>
                     </div>
@@ -317,7 +317,7 @@
 
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="closeDustbinModal()" class="flex-1 py-2.5 bg-slate-900 text-slate-300 font-bold text-xs rounded-xl">Cancel</button>
-                    <button type="submit" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">Save to Cloud</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">Save & Pin Dustbin</button>
                 </div>
             </form>
         </div>
@@ -421,6 +421,21 @@
             { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - Godavari Ghat", status: "On Duty", activeTasks: 0, completed: 45 }
         ];
 
+        // Safe coordinates parser helper (handles arrays, string arrays, objects)
+        function extractCoords(c) {
+            if (!c) return null;
+            let lat = null, lng = null;
+            if (Array.isArray(c) && c.length >= 2) {
+                lat = parseFloat(c[0]);
+                lng = parseFloat(c[1]);
+            } else if (typeof c === 'object') {
+                lat = parseFloat(c.lat || c.latitude || c[0]);
+                lng = parseFloat(c.lng || c.longitude || c[1]);
+            }
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return [lat, lng];
+        }
+
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
@@ -451,25 +466,25 @@
         }
 
         function initDashboard() {
-            // Bind Firebase Complaints Stream
+            // Bind Firebase Complaints
             db.ref('complaints').on('value', (snapshot) => {
                 const data = snapshot.val();
-                complaints = data ? Object.values(data).sort((a, b) => b.timestamp - a.timestamp) : [];
+                complaints = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : [];
                 updateMetrics();
                 renderComplaintsTable();
                 updateMapMarkers();
             });
 
-            // Bind Firebase Dustbins Stream
+            // Bind Firebase Dustbins (Realtime sync)
             db.ref('dustbins').on('value', (snapshot) => {
                 const data = snapshot.val();
                 municipalDustbins = data ? Object.values(data) : [];
                 updateMetrics();
                 renderDustbinsTable();
-                updateMapMarkers();
+                updateMapMarkers(); // Immediately drop pins for newly added dustbins!
             });
 
-            // Bind Firebase Workers Stream
+            // Bind Firebase Workers
             db.ref('workers').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -507,22 +522,28 @@
 
         function updateMapMarkers() {
             if (!map) return;
+
+            // Clear previous layers
             mapMarkers.forEach(m => map.removeLayer(m));
             binMarkers.forEach(m => map.removeLayer(m));
             mapMarkers = [];
             binMarkers = [];
 
+            // 1. Complaints Markers
             complaints.forEach(item => {
+                const pt = extractCoords(item.coords);
+                if (!pt) return;
+
                 let colorClass = 'bg-rose-600';
                 if (item.status === 'Dispatched') colorClass = 'bg-amber-500';
                 if (item.status === 'Resolved') colorClass = 'bg-emerald-600';
 
                 const icon = L.divIcon({
                     html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">⚠️</div>`,
-                    className: '', iconSize: [28, 28]
+                    className: '', iconSize: [28, 28], iconAnchor: [14, 14]
                 });
 
-                const marker = L.marker(item.coords, { icon }).addTo(map);
+                const marker = L.marker(pt, { icon }).addTo(map);
                 marker.bindPopup(`
                     <div class="p-2 max-w-[210px] font-sans text-slate-900 space-y-1.5">
                         <div class="flex items-center justify-between text-[10px] font-bold">
@@ -532,36 +553,47 @@
                         <img src="${item.beforeImage}" class="w-full h-20 object-cover rounded-lg border">
                         <p class="text-[11px] font-bold text-slate-800">${item.landmark}</p>
                         <p class="text-[10px] text-slate-600 line-clamp-2">${item.comment}</p>
-                        <a href="https://www.google.com/maps?q=${item.coords[0]},${item.coords[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline block pt-0.5">Google Maps ↗</a>
+                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline block pt-0.5">Google Maps ↗</a>
                     </div>
                 `);
                 mapMarkers.push(marker);
             });
 
+            // 2. Municipal Dustbins Markers (Robust Leaflet Binding)
             municipalDustbins.forEach(bin => {
+                const pt = extractCoords(bin.coords);
+                if (!pt) return;
+
                 const binIcon = L.divIcon({
                     html: `<div class="w-7 h-7 rounded-xl bg-sky-500 border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-xl">🗑️</div>`,
-                    className: '', iconSize: [28, 28]
+                    className: '', iconSize: [28, 28], iconAnchor: [14, 14]
                 });
 
-                const marker = L.marker(bin.coords, { icon: binIcon }).addTo(map);
+                const marker = L.marker(pt, { icon: binIcon }).addTo(map);
                 marker.bindPopup(`
                     <div class="p-2 max-w-[200px] font-sans text-slate-900 space-y-1">
                         <span class="text-slate-500 font-mono text-[10px]">${bin.id}</span>
                         <h4 class="font-extrabold text-xs text-slate-900">${bin.name}</h4>
                         <p class="text-[10px] text-slate-600">${bin.capacity} • ${bin.category}</p>
+                        <div class="flex gap-1 pt-1">
+                            <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-sky-600 underline">Maps ↗</a>
+                            <button onclick="deleteDustbin('${bin.id}')" class="text-[9px] font-bold text-rose-600 ml-auto">Delete</button>
+                        </div>
                     </div>
                 `);
                 binMarkers.push(marker);
             });
         }
 
+        // Mini-Map Position Picker
         function initOrUpdatePickerMap(initialCoords) {
             const container = document.getElementById('binPickerMap');
             if (!container) return;
 
+            const pt = extractCoords(initialCoords) || KOPARGAON_COORDS;
+
             if (!pickerMapInstance) {
-                pickerMapInstance = L.map('binPickerMap', { zoomControl: true }).setView(initialCoords, 16);
+                pickerMapInstance = L.map('binPickerMap', { zoomControl: true }).setView(pt, 16);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(pickerMapInstance);
 
                 const pickerIcon = L.divIcon({
@@ -569,7 +601,7 @@
                     className: '', iconSize: [32, 32], iconAnchor: [16, 16]
                 });
 
-                pickerMarker = L.marker(initialCoords, { icon: pickerIcon, draggable: true }).addTo(pickerMapInstance);
+                pickerMarker = L.marker(pt, { icon: pickerIcon, draggable: true }).addTo(pickerMapInstance);
                 pickerMarker.on('dragend', (e) => {
                     const pos = e.target.getLatLng();
                     updatePickerInputs(pos.lat, pos.lng);
@@ -581,14 +613,15 @@
                 });
             } else {
                 pickerMapInstance.invalidateSize();
-                pickerMarker.setLatLng(initialCoords);
-                pickerMapInstance.setView(initialCoords, 16);
+                pickerMarker.setLatLng(pt);
+                pickerMapInstance.setView(pt, 16);
             }
+            updatePickerInputs(pt[0], pt[1]);
         }
 
         function updatePickerInputs(lat, lng) {
-            document.getElementById('binLatInput').value = lat.toFixed(6);
-            document.getElementById('binLngInput').value = lng.toFixed(6);
+            document.getElementById('binLatInput').value = parseFloat(lat).toFixed(6);
+            document.getElementById('binLngInput').value = parseFloat(lng).toFixed(6);
         }
 
         function syncPickerFromInputs() {
@@ -610,22 +643,36 @@
             }
 
             municipalDustbins.forEach(bin => {
+                const pt = extractCoords(bin.coords) || [0, 0];
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-rose-950/20 transition-colors";
 
                 tr.innerHTML = `
                     <td class="p-3 font-mono text-slate-400">${bin.id}</td>
                     <td class="p-3 font-bold text-white">${bin.name}</td>
-                    <td class="p-3 font-mono text-slate-400 text-[10px]">${bin.coords[0].toFixed(5)}, ${bin.coords[1].toFixed(5)}</td>
+                    <td class="p-3 font-mono text-slate-400 text-[10px]">${pt[0].toFixed(5)}, ${pt[1].toFixed(5)}</td>
                     <td class="p-3 font-bold text-slate-200">${bin.capacity}</td>
                     <td class="p-3 text-slate-300 text-[11px]">${bin.category}</td>
                     <td class="p-3 text-right space-x-1.5">
+                        <button onclick="focusMapOnDustbin('${bin.id}')" class="px-2.5 py-1 bg-sky-900/60 hover:bg-sky-800 border border-sky-700 text-sky-200 text-[10px] rounded-lg font-bold">🗺️ Map</button>
                         <button onclick="openDustbinModal('${bin.id}')" class="px-2.5 py-1 bg-amber-700 hover:bg-amber-600 text-white text-[10px] rounded-lg font-bold">✏️ Edit</button>
                         <button onclick="deleteDustbin('${bin.id}')" class="px-2.5 py-1 bg-rose-800 hover:bg-rose-700 text-white text-[10px] rounded-lg font-bold">🗑️ Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        function focusMapOnDustbin(binId) {
+            const b = municipalDustbins.find(item => item.id === binId);
+            if (!b) return;
+            const pt = extractCoords(b.coords);
+            if (!pt) return;
+            switchAdminTab('overview');
+            if (map) {
+                map.setView(pt, 17, { animate: true });
+                showToast(`📍 Centered on ${b.name}`);
+            }
         }
 
         function openDustbinModal(binId = null) {
@@ -640,7 +687,7 @@
                 document.getElementById('binNameInput').value = b.name;
                 document.getElementById('binCapacityInput').value = b.capacity;
                 document.getElementById('binCategoryInput').value = b.category;
-                targetCoords = b.coords;
+                targetCoords = extractCoords(b.coords) || KOPARGAON_COORDS;
             } else {
                 document.getElementById('dustbinModalTitle').innerText = "Place Dustbin on Map";
                 document.getElementById('editBinId').value = "";
@@ -649,7 +696,6 @@
                 document.getElementById('binCategoryInput').value = "Mixed Municipal Waste";
             }
 
-            updatePickerInputs(targetCoords[0], targetCoords[1]);
             modal.classList.remove('hidden');
             setTimeout(() => initOrUpdatePickerMap(targetCoords), 180);
         }
@@ -665,11 +711,23 @@
             const cap = document.getElementById('binCapacityInput').value;
             const cat = document.getElementById('binCategoryInput').value;
 
-            const binData = { id: editId, name, coords: [lat, lng], capacity: cap, category: cat };
+            // Strict numeric coordinates array saved to Firebase
+            const binData = { 
+                id: editId, 
+                name: name, 
+                coords: [lat, lng], 
+                capacity: cap, 
+                category: cat,
+                timestamp: Date.now()
+            };
+
+            showToast("🛰️ Saving dustbin to cloud database...");
 
             db.ref('dustbins/' + editId).set(binData).then(() => {
-                showToast(`✓ Dustbin ${name} saved to cloud!`);
+                showToast(`✓ Dustbin ${name} pinned on map!`);
                 closeDustbinModal();
+            }).catch(err => {
+                showToast("Save error: " + err.message, true);
             });
         }
 
@@ -743,6 +801,7 @@
             }
 
             complaints.forEach(item => {
+                const pt = extractCoords(item.coords) || [0, 0];
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-rose-950/20 transition-colors";
 
@@ -760,7 +819,7 @@
                     </td>
                     <td class="p-3">
                         <span class="font-bold text-slate-200 block">${item.landmark}</span>
-                        <a href="https://www.google.com/maps?q=${item.coords[0]},${item.coords[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
+                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
                     </td>
                     <td class="p-3"><p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p></td>
                     <td class="p-3">${statusBadge}</td>
