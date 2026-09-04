@@ -131,7 +131,7 @@
 
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
-            <!-- METRIC CARDS -->
+            <!-- STATS CARDS -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Grievances</span>
@@ -191,7 +191,7 @@
                             <h2 class="text-xs font-black uppercase tracking-wider text-slate-300">
                                 Citizen Grievances Ledger
                             </h2>
-                            <span class="text-[10px] text-slate-500 font-semibold">Only resolved grievances can be permanently deleted</span>
+                            <p class="text-[10px] text-slate-500 font-semibold">Only resolved grievances can be permanently deleted</p>
                         </div>
                         <span id="complaintTableCount" class="text-xs bg-slate-900 border border-rose-950 px-2.5 py-1 rounded-full font-bold text-slate-300">
                             0 Total
@@ -203,12 +203,12 @@
                             <thead class="bg-slate-900/80 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-rose-950/60">
                                 <tr>
                                     <th class="p-3">ID & Time</th>
-                                    <th class="p-3">Photo Evidence</th>
+                                    <th class="p-3">Photo & Gemini Verification</th>
                                     <th class="p-3">Location & Coordinates</th>
                                     <th class="p-3">Citizen Note</th>
                                     <th class="p-3">Status</th>
                                     <th class="p-3">Assigned Crew</th>
-                                    <th class="p-3 text-right">Actions</th>
+                                    <th class="p-3 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="complaintsTableBody" class="divide-y divide-rose-950/40"></tbody>
@@ -394,6 +394,7 @@
     </div>
 
     <script>
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDm3z435fT5gnmbAj7Bj9Zz_UE5zWWDiEk",
             authDomain: "ecoclean-35b65.firebaseapp.com",
@@ -580,100 +581,6 @@
                     </div>
                 `);
                 binMarkers.push(marker);
-            });
-        }
-
-        /* ----------------------------------------------------------- */
-        /* RESOLVED-ONLY DELETION ENFORCEMENT & COMPLAINTS WORKFLOW    */
-        /* ----------------------------------------------------------- */
-        function deleteAdminComplaint(id) {
-            const target = complaints.find(c => c.id === id);
-            if (!target) return;
-
-            // Strict Validation: Only delete if Resolved
-            if (target.status !== 'Resolved') {
-                showToast("⚠️ Deletion Restricted! Only Resolved grievances can be deleted.", true);
-                return;
-            }
-
-            const confirmed = confirm(`Are you sure you want to permanently delete resolved complaint #${id}?`);
-            if (!confirmed) return;
-
-            db.ref('complaints/' + id).remove()
-                .then(() => {
-                    showToast(`🗑️ Resolved complaint #${id} permanently deleted.`);
-                })
-                .catch(err => showToast("Error: " + err.message, true));
-        }
-
-        function markComplaintResolvedDirect(id) {
-            const cleanProofSample = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80";
-            db.ref('complaints/' + id).update({
-                status: 'Resolved',
-                afterImage: cleanProofSample
-            }).then(() => {
-                showToast(`✓ #${id} marked Cleaned & Resolved.`);
-            }).catch(err => showToast("Error: " + err.message, true));
-        }
-
-        function renderComplaintsTable() {
-            const tbody = document.getElementById('complaintsTableBody');
-            tbody.innerHTML = "";
-
-            if (complaints.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
-                return;
-            }
-
-            complaints.forEach(item => {
-                const pt = extractCoords(item.coords) || [0, 0];
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-rose-950/20 transition-colors";
-
-                const isResolved = (item.status === 'Resolved');
-                let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">Pending</span>`;
-                if (item.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">Dispatched</span>`;
-                if (isResolved) statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
-
-                tr.innerHTML = `
-                    <td class="p-3"><span class="font-black text-white block">${item.id}</span><span class="text-[9px] text-slate-500">${item.time || 'Today'}</span></td>
-                    <td class="p-3">
-                        <div class="flex items-center gap-2">
-                            <img src="${item.beforeImage}" onclick="openLightbox('${item.beforeImage}')" class="w-12 h-12 rounded-xl object-cover border border-rose-950 cursor-pointer">
-                            ${item.afterImage ? `<img src="${item.afterImage}" onclick="openLightbox('${item.afterImage}')" class="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 cursor-pointer">` : ''}
-                        </div>
-                    </td>
-                    <td class="p-3">
-                        <span class="font-bold text-slate-200 block">${item.landmark}</span>
-                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
-                    </td>
-                    <td class="p-3"><p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p></td>
-                    <td class="p-3">${statusBadge}</td>
-                    <td class="p-3"><span class="font-bold text-xs text-slate-300">${item.assignedWorker ? `👷 ${item.assignedWorker}` : 'Unassigned'}</span></td>
-                    <td class="p-3 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
-                            ${item.status === 'Pending' ? `
-                                <button onclick="openDispatchModal('${item.id}')" class="px-2.5 py-1.5 bg-rose-700 hover:bg-rose-600 text-white font-bold text-[10px] rounded-lg shadow-sm">🚚 Dispatch</button>
-                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Clean</button>
-                            ` : ''}
-                            ${item.status === 'Dispatched' ? `
-                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Resolve</button>
-                            ` : ''}
-                            
-                            <!-- Strict Resolved-Only Delete Button -->
-                            ${isResolved ? `
-                                <button onclick="deleteAdminComplaint('${item.id}')" class="px-2.5 py-1.5 bg-rose-950/70 hover:bg-rose-900 border border-rose-600/50 text-rose-200 font-extrabold text-[10px] rounded-lg transition-all" title="Permanently delete resolved record">
-                                    🗑️ Delete
-                                </button>
-                            ` : `
-                                <button disabled class="px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-slate-600 text-[10px] font-bold rounded-lg cursor-not-allowed" title="Deletion locked until resolved">
-                                    🔒 Locked
-                                </button>
-                            `}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
             });
         }
 
@@ -879,6 +786,100 @@
             db.ref('workers/' + newId).set(newWorker).then(() => {
                 showToast(`Worker ${name} registered!`);
                 closeWorkerModal();
+            });
+        }
+
+        /* ------------------------------------------------------------- */
+        /* RESOLVED-ONLY DELETION ENFORCEMENT FOR ADMIN TABLE             */
+        /* ------------------------------------------------------------- */
+        function deleteAdminComplaint(id) {
+            const target = complaints.find(c => c.id === id);
+            if (!target) return;
+
+            // Strict Validation: Only delete if Resolved
+            if (target.status !== 'Resolved') {
+                showToast("⚠️ Deletion Restricted! Only Resolved/Cleaned complaints can be removed.", true);
+                return;
+            }
+
+            const confirmed = confirm(`Are you sure you want to permanently delete resolved complaint #${id}?`);
+            if (!confirmed) return;
+
+            db.ref('complaints/' + id).remove()
+                .then(() => {
+                    showToast(`🗑️ Resolved complaint #${id} permanently deleted.`);
+                })
+                .catch(err => showToast("Error: " + err.message, true));
+        }
+
+        function markComplaintResolvedDirect(id) {
+            const cleanProofSample = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80";
+            db.ref('complaints/' + id).update({
+                status: 'Resolved',
+                afterImage: cleanProofSample
+            }).then(() => {
+                showToast(`✓ #${id} marked Cleaned & Resolved.`);
+            }).catch(err => showToast("Error: " + err.message, true));
+        }
+
+        function renderComplaintsTable() {
+            const tbody = document.getElementById('complaintsTableBody');
+            tbody.innerHTML = "";
+
+            if (complaints.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
+                return;
+            }
+
+            complaints.forEach(item => {
+                const pt = extractCoords(item.coords) || [0, 0];
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-rose-950/20 transition-colors";
+
+                const isResolved = (item.status === 'Resolved');
+                let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">Pending</span>`;
+                if (item.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">Dispatched</span>`;
+                if (isResolved) statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-3"><span class="font-black text-white block">${item.id}</span><span class="text-[9px] text-slate-500">${item.time || 'Today'}</span></td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <img src="${item.beforeImage}" onclick="openLightbox('${item.beforeImage}')" class="w-12 h-12 rounded-xl object-cover border border-rose-950 cursor-pointer">
+                            ${item.afterImage ? `<img src="${item.afterImage}" onclick="openLightbox('${item.afterImage}')" class="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 cursor-pointer">` : ''}
+                        </div>
+                    </td>
+                    <td class="p-3">
+                        <span class="font-bold text-slate-200 block">${item.landmark}</span>
+                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
+                    </td>
+                    <td class="p-3"><p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p></td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3"><span class="font-bold text-xs text-slate-300">${item.assignedWorker ? `👷 ${item.assignedWorker}` : 'Unassigned'}</span></td>
+                    <td class="p-3 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            ${item.status === 'Pending' ? `
+                                <button onclick="openDispatchModal('${item.id}')" class="px-2.5 py-1 bg-rose-700 hover:bg-rose-600 text-white font-bold text-[10px] rounded-lg shadow-sm">🚚 Dispatch</button>
+                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Clean</button>
+                            ` : ''}
+                            ${item.status === 'Dispatched' ? `
+                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Resolve</button>
+                            ` : ''}
+                            
+                            <!-- Strict Resolved-Only Delete Action Button -->
+                            ${isResolved ? `
+                                <button onclick="deleteAdminComplaint('${item.id}')" class="px-2.5 py-1 bg-rose-950 hover:bg-rose-900 border border-rose-600/50 text-rose-200 font-extrabold text-[10px] rounded-lg transition-all" title="Permanently delete resolved record">
+                                    🗑️ Delete
+                                </button>
+                            ` : `
+                                <button disabled class="px-2.5 py-1 bg-slate-900 border border-slate-800 text-slate-600 text-[10px] font-bold rounded-lg cursor-not-allowed" title="Deletion locked until resolved">
+                                    🔒 Locked
+                                </button>
+                            `}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
