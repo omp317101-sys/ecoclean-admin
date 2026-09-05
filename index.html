@@ -70,7 +70,7 @@
 
     <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm w-full p-3.5 rounded-2xl shadow-2xl text-xs font-bold border transition-all pointer-events-none"></div>
 
-    <!-- AUTH VIEW -->
+    <!-- ================= AUTH VIEW ================= -->
     <main id="authSection" class="flex-1 flex items-center justify-center bg-gradient-to-br from-[#8B1220] via-[#3B070D] to-[#0A0B0E] p-6">
         <div class="max-w-md w-full bg-[#160407]/90 backdrop-blur-xl border border-rose-900/40 rounded-3xl p-8 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
@@ -96,7 +96,7 @@
         </div>
     </main>
 
-    <!-- ADMIN DASHBOARD -->
+    <!-- ================= ADMIN DASHBOARD ================= -->
     <div id="mainSection" class="hidden flex-1 flex flex-col h-full overflow-hidden">
         
         <header class="bg-[#180306] border-b border-rose-950/60 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
@@ -131,7 +131,7 @@
 
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
-            <!-- STATS CARDS -->
+            <!-- Realtime Metrics -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Grievances</span>
@@ -155,7 +155,7 @@
                 </div>
             </div>
 
-            <!-- VIEW 1: MAP & TRIAGE -->
+            <!-- VIEW 1: MAP & TRIAGE TABLE -->
             <div id="viewOverview" class="space-y-6">
                 <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -184,14 +184,14 @@
                     </div>
                 </div>
 
-                <!-- Complaints Table with Resolved-Only Deletion Enforcement -->
+                <!-- Complaints Table with Conditional Delete -->
                 <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-xs font-black uppercase tracking-wider text-slate-300">
-                                Citizen Grievances Ledger
+                                Citizen Grievances Ledger & History
                             </h2>
-                            <p class="text-[10px] text-slate-500 font-semibold">Only resolved grievances can be permanently deleted</p>
+                            <p class="text-[10px] text-slate-500">Resolved tickets can be deleted; active tickets are protected</p>
                         </div>
                         <span id="complaintTableCount" class="text-xs bg-slate-900 border border-rose-950 px-2.5 py-1 rounded-full font-bold text-slate-300">
                             0 Total
@@ -202,13 +202,14 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-900/80 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-rose-950/60">
                                 <tr>
-                                    <th class="p-3">ID & Time</th>
-                                    <th class="p-3">Photo & Gemini Verification</th>
+                                    <th class="p-3">ID & Timestamps</th>
+                                    <th class="p-3">Citizen Info</th>
+                                    <th class="p-3">Photos (Before / After)</th>
                                     <th class="p-3">Location & Coordinates</th>
-                                    <th class="p-3">Citizen Note</th>
+                                    <th class="p-3">Grievance Note</th>
                                     <th class="p-3">Status</th>
                                     <th class="p-3">Assigned Crew</th>
-                                    <th class="p-3 text-right">Action</th>
+                                    <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="complaintsTableBody" class="divide-y divide-rose-950/40"></tbody>
@@ -278,7 +279,7 @@
                 <input type="hidden" id="editBinId">
 
                 <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase text-slate-300 block">Pinpoint Position on Map (Tap to drop)</label>
+                    <label class="text-[10px] font-black uppercase text-slate-300 block">Pinpoint Position on Map (Tap or drag)</label>
                     <div class="h-48 w-full rounded-2xl overflow-hidden border border-rose-950 relative shadow-inner">
                         <div id="binPickerMap" class="w-full h-full"></div>
                     </div>
@@ -327,7 +328,7 @@
         </div>
     </div>
 
-    <!-- WORKER MODAL -->
+    <!-- WORKER REGISTRATION MODAL -->
     <div id="workerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#160407] border border-rose-900/60 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-rose-950 pb-3">
@@ -388,7 +389,7 @@
         </div>
     </div>
 
-    <!-- LIGHTBOX -->
+    <!-- LIGHTBOX MODAL -->
     <div id="imageLightbox" onclick="closeLightbox()" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer">
         <img id="lightboxImg" src="" class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10">
     </div>
@@ -425,6 +426,21 @@
             { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - Godavari Ghat", status: "On Duty", activeTasks: 0, completed: 45 }
         ];
 
+        // Format Date & Time cleanly
+        function formatDateTime(timestamp) {
+            if (!timestamp) return "Date unavailable";
+            const d = new Date(timestamp);
+            return d.toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Safe coordinates parser helper (handles arrays, string arrays, objects)
         function extractCoords(c) {
             if (!c) return null;
             let lat = null, lng = null;
@@ -469,6 +485,7 @@
         }
 
         function initDashboard() {
+            // Bind Firebase Complaints (Realtime)
             db.ref('complaints').on('value', (snapshot) => {
                 const data = snapshot.val();
                 complaints = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : [];
@@ -477,6 +494,7 @@
                 updateMapMarkers();
             });
 
+            // Bind Firebase Dustbins (Realtime)
             db.ref('dustbins').on('value', (snapshot) => {
                 const data = snapshot.val();
                 municipalDustbins = data ? Object.values(data) : [];
@@ -485,6 +503,7 @@
                 updateMapMarkers();
             });
 
+            // Bind Firebase Workers
             db.ref('workers').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -538,9 +557,11 @@
                 if (item.status === 'Resolved') colorClass = 'bg-emerald-600';
 
                 const icon = L.divIcon({
-                    html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">⚠️</div>`,
+                    html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">${item.status === 'Resolved' ? '✓' : '⚠️'}</div>`,
                     className: '', iconSize: [28, 28], iconAnchor: [14, 14]
                 });
+
+                const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
 
                 const marker = L.marker(pt, { icon }).addTo(map);
                 marker.bindPopup(`
@@ -551,8 +572,12 @@
                         </div>
                         <img src="${item.beforeImage}" class="w-full h-20 object-cover rounded-lg border">
                         <p class="text-[11px] font-bold text-slate-800">${item.landmark}</p>
+                        <p class="text-[10px] text-slate-500">🕒 Filed: ${filedDateString}</p>
                         <p class="text-[10px] text-slate-600 line-clamp-2">${item.comment}</p>
-                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline block pt-0.5">Google Maps ↗</a>
+                        <div class="flex items-center justify-between pt-1">
+                            <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline">Maps ↗</a>
+                            ${item.status === 'Resolved' ? `<button onclick="adminDeleteComplaint('${item.id}')" class="text-[9px] font-black text-rose-700 hover:underline">Delete Ticket</button>` : ''}
+                        </div>
                     </div>
                 `);
                 mapMarkers.push(marker);
@@ -584,7 +609,7 @@
             });
         }
 
-        // Mini-Map Position Picker
+        // Mini-Map Position Picker for Dustbins
         function initOrUpdatePickerMap(initialCoords) {
             const container = document.getElementById('binPickerMap');
             if (!container) return;
@@ -768,9 +793,7 @@
             });
         }
 
-        function openWorkerModal() {
-            document.getElementById('workerModal').classList.remove('hidden');
-        }
+        function openWorkerModal() { document.getElementById('workerModal').classList.remove('hidden'); }
         function closeWorkerModal() { document.getElementById('workerModal').classList.add('hidden'); }
 
         function handleSaveWorker(e) {
@@ -789,45 +812,13 @@
             });
         }
 
-        /* ------------------------------------------------------------- */
-        /* RESOLVED-ONLY DELETION ENFORCEMENT FOR ADMIN TABLE             */
-        /* ------------------------------------------------------------- */
-        function deleteAdminComplaint(id) {
-            const target = complaints.find(c => c.id === id);
-            if (!target) return;
-
-            // Strict Validation: Only delete if Resolved
-            if (target.status !== 'Resolved') {
-                showToast("⚠️ Deletion Restricted! Only Resolved/Cleaned complaints can be removed.", true);
-                return;
-            }
-
-            const confirmed = confirm(`Are you sure you want to permanently delete resolved complaint #${id}?`);
-            if (!confirmed) return;
-
-            db.ref('complaints/' + id).remove()
-                .then(() => {
-                    showToast(`🗑️ Resolved complaint #${id} permanently deleted.`);
-                })
-                .catch(err => showToast("Error: " + err.message, true));
-        }
-
-        function markComplaintResolvedDirect(id) {
-            const cleanProofSample = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80";
-            db.ref('complaints/' + id).update({
-                status: 'Resolved',
-                afterImage: cleanProofSample
-            }).then(() => {
-                showToast(`✓ #${id} marked Cleaned & Resolved.`);
-            }).catch(err => showToast("Error: " + err.message, true));
-        }
-
+        // RENDER COMPLAINTS WITH CONDITIONAL DELETION & TIMESTAMPS
         function renderComplaintsTable() {
             const tbody = document.getElementById('complaintsTableBody');
             tbody.innerHTML = "";
 
             if (complaints.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
                 return;
             }
 
@@ -836,51 +827,93 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-rose-950/20 transition-colors";
 
-                const isResolved = (item.status === 'Resolved');
                 let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">Pending</span>`;
                 if (item.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">Dispatched</span>`;
-                if (isResolved) statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
+                if (item.status === 'Resolved') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
+
+                const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
+                const resolvedDateString = item.resolvedAt ? formatDateTime(item.resolvedAt) : null;
+                const isResolved = (item.status === 'Resolved');
 
                 tr.innerHTML = `
-                    <td class="p-3"><span class="font-black text-white block">${item.id}</span><span class="text-[9px] text-slate-500">${item.time || 'Today'}</span></td>
+                    <td class="p-3">
+                        <span class="font-black text-white font-mono block">${item.id}</span>
+                        <span class="text-[10px] font-bold text-rose-400 block mt-0.5">🕒 Filed: ${filedDateString}</span>
+                        ${resolvedDateString ? `<span class="text-[9px] font-bold text-emerald-400 block">✓ Cleared: ${resolvedDateString}</span>` : ''}
+                    </td>
+                    <td class="p-3">
+                        <span class="font-bold text-slate-200 block">${item.citizenName || 'Resident'}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">${item.citizenPhone || 'N/A'}</span>
+                    </td>
                     <td class="p-3">
                         <div class="flex items-center gap-2">
-                            <img src="${item.beforeImage}" onclick="openLightbox('${item.beforeImage}')" class="w-12 h-12 rounded-xl object-cover border border-rose-950 cursor-pointer">
-                            ${item.afterImage ? `<img src="${item.afterImage}" onclick="openLightbox('${item.afterImage}')" class="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 cursor-pointer">` : ''}
+                            <div class="text-center">
+                                <img src="${item.beforeImage}" onclick="openLightbox('${item.beforeImage}')" class="w-12 h-12 rounded-xl object-cover border border-rose-950 cursor-pointer shadow-sm">
+                                <span class="text-[8px] text-slate-400 font-bold block uppercase mt-0.5">Before</span>
+                            </div>
+                            ${item.afterImage ? `
+                                <div class="text-center">
+                                    <img src="${item.afterImage}" onclick="openLightbox('${item.afterImage}')" class="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 cursor-pointer shadow-sm">
+                                    <span class="text-[8px] text-emerald-400 font-bold block uppercase mt-0.5">Clean</span>
+                                </div>
+                            ` : ''}
                         </div>
                     </td>
                     <td class="p-3">
                         <span class="font-bold text-slate-200 block">${item.landmark}</span>
                         <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
                     </td>
-                    <td class="p-3"><p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p></td>
+                    <td class="p-3">
+                        <p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p>
+                        <span class="text-[9px] text-emerald-400/80 font-mono block mt-0.5">${item.geminiVerdict || 'AI Verified'}</span>
+                    </td>
                     <td class="p-3">${statusBadge}</td>
                     <td class="p-3"><span class="font-bold text-xs text-slate-300">${item.assignedWorker ? `👷 ${item.assignedWorker}` : 'Unassigned'}</span></td>
                     <td class="p-3 text-right">
-                        <div class="flex items-center justify-end gap-1.5">
+                        <div class="flex flex-col items-end gap-1.5">
                             ${item.status === 'Pending' ? `
-                                <button onclick="openDispatchModal('${item.id}')" class="px-2.5 py-1 bg-rose-700 hover:bg-rose-600 text-white font-bold text-[10px] rounded-lg shadow-sm">🚚 Dispatch</button>
-                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Clean</button>
-                            ` : ''}
-                            ${item.status === 'Dispatched' ? `
-                                <button onclick="markComplaintResolvedDirect('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm">✓ Resolve</button>
+                                <button onclick="openDispatchModal('${item.id}')" class="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white font-bold text-[10px] rounded-lg shadow-sm whitespace-nowrap">
+                                    🚚 Dispatch
+                                </button>
                             ` : ''}
                             
-                            <!-- Strict Resolved-Only Delete Action Button -->
+                            <!-- CONDITIONAL DELETION: Only allowed when Resolved -->
                             ${isResolved ? `
-                                <button onclick="deleteAdminComplaint('${item.id}')" class="px-2.5 py-1 bg-rose-950 hover:bg-rose-900 border border-rose-600/50 text-rose-200 font-extrabold text-[10px] rounded-lg transition-all" title="Permanently delete resolved record">
-                                    🗑️ Delete
+                                <button onclick="adminDeleteComplaint('${item.id}')" class="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-extrabold text-[10px] rounded-lg shadow-sm flex items-center gap-1 active:scale-95 transition-all whitespace-nowrap">
+                                    <span>🗑️</span>
+                                    <span>Delete Ticket</span>
                                 </button>
                             ` : `
-                                <button disabled class="px-2.5 py-1 bg-slate-900 border border-slate-800 text-slate-600 text-[10px] font-bold rounded-lg cursor-not-allowed" title="Deletion locked until resolved">
-                                    🔒 Locked
-                                </button>
+                                <span class="text-[9px] text-slate-500 font-bold bg-slate-900/60 border border-rose-950/60 px-2 py-0.5 rounded whitespace-nowrap">
+                                    🔒 In Progress
+                                </span>
                             `}
                         </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // DELETION CONTROLLER FOR ADMIN (Enforces Resolved-Only Delete)
+        function adminDeleteComplaint(complaintId) {
+            const target = complaints.find(c => c.id === complaintId);
+            if (!target) return;
+
+            if (target.status !== 'Resolved') {
+                showToast("⚠️ Active tickets cannot be deleted! Only resolved tickets can be purged.", true);
+                return;
+            }
+
+            if (confirm(`Permanent Action: Are you sure you want to purge resolved ticket ${complaintId} from cloud records?`)) {
+                db.ref('complaints/' + complaintId).remove()
+                    .then(() => {
+                        showToast(`🗑️ Ticket ${complaintId} purged from cloud.`);
+                    })
+                    .catch((err) => {
+                        showToast("Delete failed: " + err.message, true);
+                    });
+            }
         }
 
         function openDispatchModal(complaintId) {
