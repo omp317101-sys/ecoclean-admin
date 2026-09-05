@@ -58,12 +58,6 @@
         }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #9E1220; border-radius: 8px; }
-        @keyframes pulseRing {
-            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
-            70% { box-shadow: 0 0 0 14px rgba(14, 165, 233, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
-        }
-        .pulsing-bin-picker { animation: pulseRing 1.6s infinite ease-out; border-radius: 9999px; }
     </style>
 </head>
 <body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-rose-600 selection:text-white flex flex-col">
@@ -131,7 +125,7 @@
 
         <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
-            <!-- Realtime Metrics -->
+            <!-- Metrics Grid -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Grievances</span>
@@ -184,7 +178,7 @@
                     </div>
                 </div>
 
-                <!-- Complaints Table with Conditional Delete -->
+                <!-- Complaints Table -->
                 <div class="bg-[#160407] border border-rose-950/80 rounded-3xl p-5 space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
@@ -267,7 +261,7 @@
         </main>
     </div>
 
-    <!-- DUSTBIN MODAL WITH PICKER MAP -->
+    <!-- DUSTBIN MODAL -->
     <div id="dustbinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#160407] border border-rose-900/60 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-rose-950 pb-3">
@@ -425,10 +419,10 @@
             { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - River Ghat", status: "On Duty", activeTasks: 0, completed: 45 }
         ];
 
-        // Helper that cleans old database entries still containing "Kopargaon"
+        // Global Sanitizer: cleans any text coming from Firebase or user input
         function sanitizeText(txt) {
             if (!txt) return "";
-            return txt.replace(/kopargaon/gi, "City");
+            return String(txt).replace(/kopargaon/gi, "City");
         }
 
         function formatDateTime(timestamp) {
@@ -547,7 +541,7 @@
             mapMarkers = [];
             binMarkers = [];
 
-            // 1. Complaints Markers
+            // Complaints
             complaints.forEach(item => {
                 const pt = extractCoords(item.coords);
                 if (!pt) return;
@@ -584,7 +578,7 @@
                 mapMarkers.push(marker);
             });
 
-            // 2. Municipal Dustbins Markers
+            // Dustbins
             municipalDustbins.forEach(bin => {
                 const pt = extractCoords(bin.coords);
                 if (!pt) return;
@@ -623,7 +617,7 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(pickerMapInstance);
 
                 const pickerIcon = L.divIcon({
-                    html: `<div class="w-8 h-8 rounded-full bg-sky-500 border-2 border-white text-white flex items-center justify-center text-sm font-black shadow-2xl pulsing-bin-picker">🗑️</div>`,
+                    html: `<div class="w-8 h-8 rounded-full bg-sky-500 border-2 border-white text-white flex items-center justify-center text-sm font-black shadow-2xl">🗑️</div>`,
                     className: '', iconSize: [32, 32], iconAnchor: [16, 16]
                 });
 
@@ -878,8 +872,6 @@
                                     🚚 Dispatch
                                 </button>
                             ` : ''}
-                            
-                            <!-- CONDITIONAL DELETION: Only allowed when Resolved -->
                             ${isResolved ? `
                                 <button onclick="adminDeleteComplaint('${item.id}')" class="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-extrabold text-[10px] rounded-lg shadow-sm flex items-center gap-1 active:scale-95 transition-all whitespace-nowrap">
                                     <span>🗑️</span>
