@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoClean Admin - Municipal Command Center</title>
+    <title>EcoClean Admin - City Municipal Command Center</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -76,7 +76,7 @@
             <div class="text-center space-y-2">
                 <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-600/20 border border-rose-500/30 flex items-center justify-center text-3xl shadow-inner">🛡️</div>
                 <h1 class="text-2xl font-black tracking-tight text-white">Command Center</h1>
-                <p class="text-xs text-rose-300/80 font-medium">Kopargaon Municipal Corporation • Admin Desk</p>
+                <p class="text-xs text-rose-300/80 font-medium">City Municipal Corporation • Admin Desk</p>
             </div>
 
             <form onsubmit="handleAdminLogin(event)" class="space-y-4">
@@ -104,10 +104,10 @@
                 <div class="w-9 h-9 rounded-xl bg-rose-600/20 border border-rose-500/30 flex items-center justify-center text-lg">🛡️</div>
                 <div>
                     <h1 class="font-extrabold text-sm text-white tracking-wide flex items-center gap-2">
-                        EcoClean Municipal Command
+                        EcoClean City Command
                         <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">● Cloud Connected</span>
                     </h1>
-                    <p class="text-[10px] text-slate-400">Kopargaon Civic Sanitation, Dustbins & Fleet Management</p>
+                    <p class="text-[10px] text-slate-400">City Civic Sanitation, Dustbins & Fleet Management</p>
                 </div>
             </div>
 
@@ -146,7 +146,7 @@
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Municipal Dustbins</span>
                     <h3 id="statTotalBins" class="text-2xl font-black text-amber-400 mt-1">0</h3>
-                    <p class="text-[10px] text-slate-500 mt-1">Geotagged in Kopargaon</p>
+                    <p class="text-[10px] text-slate-500 mt-1">Geotagged across City</p>
                 </div>
                 <div class="bg-[#160407] border border-rose-950/80 p-4 rounded-2xl shadow-sm">
                     <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400">On-Duty Sanitation Crew</span>
@@ -161,7 +161,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h2 class="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                                <span>🗺️</span> Kopargaon Geographic Command Map
+                                <span>🗺️</span> City Geographic Command Map
                             </h2>
                             <p class="text-[11px] text-slate-400">Real-time citizen grievance markers & municipal dustbins</p>
                         </div>
@@ -287,7 +287,7 @@
 
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Area / Landmark Name</label>
-                    <input type="text" id="binNameInput" placeholder="e.g. Shivaji Chowk Corner" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none focus:ring-1 focus:ring-rose-500">
+                    <input type="text" id="binNameInput" placeholder="e.g. Central Market Corner" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none focus:ring-1 focus:ring-rose-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -348,7 +348,7 @@
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Assigned Ward</label>
-                    <input type="text" id="workerWardInput" placeholder="Ward 1 - Kopargaon" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
+                    <input type="text" id="workerWardInput" placeholder="Ward 1 - Central Zone" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-slate-900 border border-rose-950 text-white focus:outline-none">
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Vehicle Number</label>
@@ -395,7 +395,6 @@
     </div>
 
     <script>
-        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDm3z435fT5gnmbAj7Bj9Zz_UE5zWWDiEk",
             authDomain: "ecoclean-35b65.firebaseapp.com",
@@ -409,7 +408,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const KOPARGAON_COORDS = [19.8841, 74.4788];
+        const CITY_COORDS = [19.8841, 74.4788];
         let map = null;
         let mapMarkers = [];
         let binMarkers = [];
@@ -423,10 +422,15 @@
         let workers = [
             { id: "W101", name: "Raju Shinde", phone: "9822110022", vehicle: "MH-17-AG-4421", ward: "Ward 1 - Station Road", status: "On Duty", activeTasks: 0, completed: 34 },
             { id: "W102", name: "Sunita Jadhav", phone: "9822110033", vehicle: "MH-17-AG-1092", ward: "Ward 2 - Market Chowk", status: "On Duty", activeTasks: 0, completed: 28 },
-            { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - Godavari Ghat", status: "On Duty", activeTasks: 0, completed: 45 }
+            { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - River Ghat", status: "On Duty", activeTasks: 0, completed: 45 }
         ];
 
-        // Format Date & Time cleanly
+        // Helper that cleans old database entries still containing "Kopargaon"
+        function sanitizeText(txt) {
+            if (!txt) return "";
+            return txt.replace(/kopargaon/gi, "City");
+        }
+
         function formatDateTime(timestamp) {
             if (!timestamp) return "Date unavailable";
             const d = new Date(timestamp);
@@ -440,7 +444,6 @@
             });
         }
 
-        // Safe coordinates parser helper (handles arrays, string arrays, objects)
         function extractCoords(c) {
             if (!c) return null;
             let lat = null, lng = null;
@@ -485,7 +488,6 @@
         }
 
         function initDashboard() {
-            // Bind Firebase Complaints (Realtime)
             db.ref('complaints').on('value', (snapshot) => {
                 const data = snapshot.val();
                 complaints = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : [];
@@ -494,7 +496,6 @@
                 updateMapMarkers();
             });
 
-            // Bind Firebase Dustbins (Realtime)
             db.ref('dustbins').on('value', (snapshot) => {
                 const data = snapshot.val();
                 municipalDustbins = data ? Object.values(data) : [];
@@ -503,7 +504,6 @@
                 updateMapMarkers();
             });
 
-            // Bind Firebase Workers
             db.ref('workers').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -531,7 +531,7 @@
 
         function initMap() {
             if (!map) {
-                map = L.map('adminLiveMap', { zoomControl: true }).setView(KOPARGAON_COORDS, 14);
+                map = L.map('adminLiveMap', { zoomControl: true }).setView(CITY_COORDS, 14);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
             } else {
                 map.invalidateSize();
@@ -562,6 +562,7 @@
                 });
 
                 const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
+                const cleanLandmark = sanitizeText(item.landmark);
 
                 const marker = L.marker(pt, { icon }).addTo(map);
                 marker.bindPopup(`
@@ -571,9 +572,9 @@
                             <span class="font-extrabold uppercase">${item.status}</span>
                         </div>
                         <img src="${item.beforeImage}" class="w-full h-20 object-cover rounded-lg border">
-                        <p class="text-[11px] font-bold text-slate-800">${item.landmark}</p>
+                        <p class="text-[11px] font-bold text-slate-800">${cleanLandmark}</p>
                         <p class="text-[10px] text-slate-500">🕒 Filed: ${filedDateString}</p>
-                        <p class="text-[10px] text-slate-600 line-clamp-2">${item.comment}</p>
+                        <p class="text-[10px] text-slate-600 line-clamp-2">${sanitizeText(item.comment)}</p>
                         <div class="flex items-center justify-between pt-1">
                             <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-rose-600 underline">Maps ↗</a>
                             ${item.status === 'Resolved' ? `<button onclick="adminDeleteComplaint('${item.id}')" class="text-[9px] font-black text-rose-700 hover:underline">Delete Ticket</button>` : ''}
@@ -593,11 +594,13 @@
                     className: '', iconSize: [28, 28], iconAnchor: [14, 14]
                 });
 
+                const cleanBinName = sanitizeText(bin.name);
+
                 const marker = L.marker(pt, { icon: binIcon }).addTo(map);
                 marker.bindPopup(`
                     <div class="p-2 max-w-[200px] font-sans text-slate-900 space-y-1">
                         <span class="text-slate-500 font-mono text-[10px]">${bin.id}</span>
-                        <h4 class="font-extrabold text-xs text-slate-900">${bin.name}</h4>
+                        <h4 class="font-extrabold text-xs text-slate-900">${cleanBinName}</h4>
                         <p class="text-[10px] text-slate-600">${bin.capacity} • ${bin.category}</p>
                         <div class="flex gap-1 pt-1">
                             <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-sky-600 underline">Maps ↗</a>
@@ -609,12 +612,11 @@
             });
         }
 
-        // Mini-Map Position Picker for Dustbins
         function initOrUpdatePickerMap(initialCoords) {
             const container = document.getElementById('binPickerMap');
             if (!container) return;
 
-            const pt = extractCoords(initialCoords) || KOPARGAON_COORDS;
+            const pt = extractCoords(initialCoords) || CITY_COORDS;
 
             if (!pickerMapInstance) {
                 pickerMapInstance = L.map('binPickerMap', { zoomControl: true }).setView(pt, 16);
@@ -673,7 +675,7 @@
 
                 tr.innerHTML = `
                     <td class="p-3 font-mono text-slate-400">${bin.id}</td>
-                    <td class="p-3 font-bold text-white">${bin.name}</td>
+                    <td class="p-3 font-bold text-white">${sanitizeText(bin.name)}</td>
                     <td class="p-3 font-mono text-slate-400 text-[10px]">${pt[0].toFixed(5)}, ${pt[1].toFixed(5)}</td>
                     <td class="p-3 font-bold text-slate-200">${bin.capacity}</td>
                     <td class="p-3 text-slate-300 text-[11px]">${bin.category}</td>
@@ -695,23 +697,23 @@
             switchAdminTab('overview');
             if (map) {
                 map.setView(pt, 17, { animate: true });
-                showToast(`📍 Centered on ${b.name}`);
+                showToast(`📍 Centered on ${sanitizeText(b.name)}`);
             }
         }
 
         function openDustbinModal(binId = null) {
             const modal = document.getElementById('dustbinModal');
-            let targetCoords = KOPARGAON_COORDS;
+            let targetCoords = CITY_COORDS;
 
             if (binId) {
                 const b = municipalDustbins.find(item => item.id === binId);
                 if (!b) return;
                 document.getElementById('dustbinModalTitle').innerText = `Edit Dustbin (${b.id})`;
                 document.getElementById('editBinId').value = b.id;
-                document.getElementById('binNameInput').value = b.name;
+                document.getElementById('binNameInput').value = sanitizeText(b.name);
                 document.getElementById('binCapacityInput').value = b.capacity;
                 document.getElementById('binCategoryInput').value = b.category;
-                targetCoords = extractCoords(b.coords) || KOPARGAON_COORDS;
+                targetCoords = extractCoords(b.coords) || CITY_COORDS;
             } else {
                 document.getElementById('dustbinModalTitle').innerText = "Place Dustbin on Map";
                 document.getElementById('editBinId').value = "";
@@ -729,7 +731,7 @@
         function handleSaveDustbin(e) {
             e.preventDefault();
             const editId = document.getElementById('editBinId').value || `BIN-${Math.floor(100 + Math.random() * 900)}`;
-            const name = document.getElementById('binNameInput').value.trim();
+            const name = sanitizeText(document.getElementById('binNameInput').value.trim());
             const lat = parseFloat(document.getElementById('binLatInput').value);
             const lng = parseFloat(document.getElementById('binLngInput').value);
             const cap = document.getElementById('binCapacityInput').value;
@@ -779,7 +781,7 @@
                             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusBadgeColor}">${w.status}</span>
                         </div>
                         <div class="text-xs space-y-1 text-slate-400 mt-2">
-                            <p>📍 Ward: <strong class="text-slate-200">${w.ward}</strong></p>
+                            <p>📍 Ward: <strong class="text-slate-200">${sanitizeText(w.ward)}</strong></p>
                             <p>🚜 Vehicle: <strong class="text-slate-200">${w.vehicle}</strong></p>
                             <p>📞 Phone: <strong class="text-slate-200">${w.phone}</strong></p>
                         </div>
@@ -801,7 +803,7 @@
             const newId = `W10${workers.length + 1}`;
             const name = document.getElementById('workerNameInput').value.trim();
             const phone = document.getElementById('workerPhoneInput').value.trim();
-            const ward = document.getElementById('workerWardInput').value.trim();
+            const ward = sanitizeText(document.getElementById('workerWardInput').value.trim());
             const vehicle = document.getElementById('workerVehicleInput').value.trim();
             const status = document.getElementById('workerStatusInput').value;
 
@@ -812,7 +814,6 @@
             });
         }
 
-        // RENDER COMPLAINTS WITH CONDITIONAL DELETION & TIMESTAMPS
         function renderComplaintsTable() {
             const tbody = document.getElementById('complaintsTableBody');
             tbody.innerHTML = "";
@@ -834,6 +835,7 @@
                 const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
                 const resolvedDateString = item.resolvedAt ? formatDateTime(item.resolvedAt) : null;
                 const isResolved = (item.status === 'Resolved');
+                const cleanLandmark = sanitizeText(item.landmark);
 
                 tr.innerHTML = `
                     <td class="p-3">
@@ -860,11 +862,11 @@
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="font-bold text-slate-200 block">${item.landmark}</span>
+                        <span class="font-bold text-slate-200 block">${cleanLandmark}</span>
                         <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-rose-400 underline">Maps ↗</a>
                     </td>
                     <td class="p-3">
-                        <p class="text-slate-300 text-xs line-clamp-2">${item.comment}</p>
+                        <p class="text-slate-300 text-xs line-clamp-2">${sanitizeText(item.comment)}</p>
                         <span class="text-[9px] text-emerald-400/80 font-mono block mt-0.5">${item.geminiVerdict || 'AI Verified'}</span>
                     </td>
                     <td class="p-3">${statusBadge}</td>
@@ -895,7 +897,6 @@
             });
         }
 
-        // DELETION CONTROLLER FOR ADMIN (Enforces Resolved-Only Delete)
         function adminDeleteComplaint(complaintId) {
             const target = complaints.find(c => c.id === complaintId);
             if (!target) return;
@@ -931,7 +932,7 @@
                     label.innerHTML = `
                         <div>
                             <span class="font-bold text-xs text-white block">👷 ${w.name} (${w.vehicle})</span>
-                            <span class="text-[10px] text-slate-400">${w.ward}</span>
+                            <span class="text-[10px] text-slate-400">${sanitizeText(w.ward)}</span>
                         </div>
                         <input type="radio" name="selectedWorkerRadio" value="${w.name}" class="text-rose-600">
                     `;
