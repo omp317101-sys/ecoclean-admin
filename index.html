@@ -134,7 +134,12 @@
                     Authorize & Launch Console
                 </button>
             </form>
-            <p class="text-center text-[10px] text-emerald-300/60">Access: sanjivani / sai@12</p>
+            <div class="flex items-center justify-between text-[11px] pt-1">
+                <button type="button" onclick="history.back()" class="text-emerald-300/80 hover:text-white font-bold flex items-center gap-1">
+                    ← Back
+                </button>
+                <span class="text-emerald-300/60 text-[10px]">Access: sanjivani / sai@12</span>
+            </div>
         </div>
     </main>
 
@@ -143,6 +148,12 @@
         
         <header class="bg-[#08230B] border-b border-emerald-950/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
             <div class="flex items-center gap-3">
+                <!-- BACK BUTTON TO RETURN TO PREVIOUS INTERFACE -->
+                <button type="button" onclick="navigateBack()" title="Go Back to Previous Interface" class="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-800/70 text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                    <span>←</span>
+                    <span class="hidden sm:inline">Back</span>
+                </button>
+
                 <div class="w-10 h-10 rounded-full bg-white p-0.5 border border-emerald-400/40 flex items-center justify-center overflow-hidden">
                     <img src="logo.png" onerror="this.onerror=null; this.src='https://api.iconify.design/fluent-emoji:wastebasket.svg';" class="w-full h-full object-contain">
                 </div>
@@ -390,7 +401,6 @@
             
             <form onsubmit="handleSaveDustbin(event)" class="space-y-3.5">
                 <input type="hidden" id="editBinId">
-                <!-- Stored internally so map features & saving still work perfectly -->
                 <input type="hidden" id="binLatInput">
                 <input type="hidden" id="binLngInput">
 
@@ -580,6 +590,23 @@
         let activeOffsetRays = [];
         let activeSourceBinForOffset = null;
         let currentCalculatedPoints = [];
+
+        // Universal Back Navigation Handler
+        function navigateBack() {
+            const workersView = document.getElementById('viewWorkers');
+            if (workersView && !workersView.classList.contains('hidden')) {
+                // If on Workers tab, switch back to Overview
+                switchAdminTab('overview');
+                return;
+            }
+
+            // If browser has history, use it; otherwise return to sign in screen
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                handleAdminLogout();
+            }
+        }
 
         function onMultiplierStepChanged() {
             if (activeSourceBinForOffset) {
