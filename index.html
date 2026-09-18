@@ -135,7 +135,7 @@
                 </button>
             </form>
             <div class="flex items-center justify-between text-[11px] pt-1">
-                <button type="button" onclick="history.back()" class="text-emerald-300/80 hover:text-white font-bold flex items-center gap-1">
+                <button type="button" onclick="navigateBack()" class="text-emerald-300/80 hover:text-white font-bold flex items-center gap-1">
                     ← Back
                 </button>
                 <span class="text-emerald-300/60 text-[10px]">Access: sanjivani / sai@12</span>
@@ -148,7 +148,6 @@
         
         <header class="bg-[#08230B] border-b border-emerald-950/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
             <div class="flex items-center gap-3">
-                <!-- BACK BUTTON TO RETURN TO PREVIOUS INTERFACE -->
                 <button type="button" onclick="navigateBack()" title="Go Back to Previous Interface" class="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-800/70 text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
                     <span>←</span>
                     <span class="hidden sm:inline">Back</span>
@@ -260,7 +259,7 @@
                         </div>
                     </div>
 
-                    <!-- Offset Active Banner With Batch Add Quick Action Buttons -->
+                    <!-- Offset Active Banner -->
                     <div id="offsetActiveBanner" class="hidden p-3 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200">
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -312,7 +311,7 @@
                                         <input type="checkbox" id="selectAllComplaintsBox" onchange="toggleSelectAllComplaints(this.checked)" class="accent-emerald-600 rounded cursor-pointer">
                                     </th>
                                     <th class="p-3">ID & Timestamps</th>
-                                    <th class="p-3">Citizen Info</th>
+                                    <th class="p-3">Citizen</th>
                                     <th class="p-3">Photos (Before / After)</th>
                                     <th class="p-3">Location</th>
                                     <th class="p-3">Grievance Note</th>
@@ -369,7 +368,7 @@
 
             </div>
 
-            <!-- VIEW 2: WORKERS ROSTER -->
+            <!-- VIEW 2: WORKERS ROSTER (Staff phone numbers kept visible) -->
             <div id="viewWorkers" class="hidden space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
@@ -591,16 +590,13 @@
         let activeSourceBinForOffset = null;
         let currentCalculatedPoints = [];
 
-        // Universal Back Navigation Handler
         function navigateBack() {
             const workersView = document.getElementById('viewWorkers');
             if (workersView && !workersView.classList.contains('hidden')) {
-                // If on Workers tab, switch back to Overview
                 switchAdminTab('overview');
                 return;
             }
 
-            // If browser has history, use it; otherwise return to sign in screen
             if (window.history.length > 1) {
                 window.history.back();
             } else {
@@ -676,14 +672,14 @@
                     <div class="p-2.5 max-w-[210px] font-sans text-slate-900 space-y-2">
                         <div class="border-b pb-1">
                             <span class="text-[9px] font-black uppercase text-emerald-800 tracking-wider">🎯 Dot #${idx + 1} (Multiple ×${idx + 1})</span>
-                            <h4 class="font-extrabold text-xs text-slate-900 mt-0.5">${dist} Meters from ${sanitizeText(bin.name)}</h4>
+                            <h4 class="font-extrabold text-xs text-slate-900 mt-0.5">${dist} Meters from${sanitizeText(bin.name)}</h4>
                         </div>
                         <p class="text-[10px] text-slate-600">Direction: <b>${bearing}°</b> (${getCompassDirectionLabel(bearing)})</p>
                         
                         <div class="pt-1 space-y-1">
                             <button onclick="deploySingleBinAtPoint(${idx})" class="w-full py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[11px] rounded-lg shadow active:scale-95 transition-all flex items-center justify-center gap-1">
                                 <span>➕</span>
-                                <span>Add This Bin (#${idx + 1} at ${dist}m)</span>
+                                <span>Add This Bin (#${idx + 1} at${dist}m)</span>
                             </button>
                             ${(idx > 0) ? `
                                 <button onclick="deployMultipleBins(${idx + 1})" class="w-full py-1 bg-slate-900 hover:bg-slate-800 text-emerald-300 font-bold text-[10px] rounded-lg border border-emerald-950 active:scale-95">
@@ -706,7 +702,7 @@
 
             activeOffsetRays.push(guideLine);
             map.setView(pt, 16, { animate: true });
-            showToast(`🎯 5 Multipliers (+${distanceList.join('m, +')}m) projected from ${sanitizeText(bin.name)}`);
+            showToast(`🎯 5 Multipliers (+${distanceList.join('m, +')}m) projected from${sanitizeText(bin.name)}`);
         }
 
         function getCompassDirectionLabel(bearing) {
@@ -736,7 +732,7 @@
                 timestamp: Date.now()
             };
 
-            showToast(`🛰️ Pinning bin at +${pt.distance}m from ${sourceName}...`);
+            showToast(`🛰️ Pinning bin at +${pt.distance}m from${sourceName}...`);
 
             db.ref('dustbins/' + newBinId).set(newBinData).then(() => {
                 showToast(`✅ Added ${newBinData.name}! Existing bin remains untouched.`);
@@ -769,7 +765,7 @@
                 };
             }
 
-            showToast(`🛰️ Deploying ${count} bins (1 to ${count}) at once...`);
+            showToast(`🛰️ Deploying ${count} bins (1 to${count}) at once...`);
 
             db.ref().update(updates).then(() => {
                 showToast(`✅ Successfully deployed ${count} bins in line! Source bin kept safe.`);
@@ -858,7 +854,7 @@
             municipalDustbins.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
-                opt.innerText = `${b.id} - ${sanitizeText(b.name)}`;
+                opt.innerText = `${b.id} -${sanitizeText(b.name)}`;
                 select.appendChild(opt);
             });
         }
@@ -1079,7 +1075,7 @@
                                 <span style="color: ${badgeColor}; font-weight: bold;">${fill}%</span>
                             </div>
                             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                <div class="h-full transition-all duration-500" style="width: ${fill}%; background-color: ${badgeColor}"></div>
+                                <div class="h-full transition-all duration-500" style="width: ${fill}\%; background-color:${badgeColor}"></div>
                             </div>
                         </div>
 
@@ -1217,12 +1213,10 @@
                     </td>
                     <td class="p-3">
                         <span class="font-black text-white font-mono block">${item.id}</span>
-                        <span class="text-[10px] font-bold text-emerald-400 block mt-0.5">🕒 Filed: ${filedDateString}</span>
-                        ${resolvedDateString ? `<span class="text-[9px] font-bold text-emerald-400 block">✓ Cleared: ${resolvedDateString}</span>` : ''}
+                        <span class="text-[10px] font-bold text-emerald-400 block mt-0.5">🕒 Filed: ${filedDateString}</span>${resolvedDateString ? `<span class="text-[9px] font-bold text-emerald-400 block">✓ Cleared: ${resolvedDateString}</span>` : ''}
                     </td>
                     <td class="p-3">
                         <span class="font-bold text-slate-200 block">${item.citizenName || 'Resident'}</span>
-                        <span class="text-[10px] text-slate-500 font-mono">${item.citizenPhone || 'N/A'}</span>
                     </td>
                     <td class="p-3">
                         <div class="flex items-center gap-2">
@@ -1362,7 +1356,7 @@
                     <td class="p-3 text-slate-300 text-[11px]">
                         ${bin.temperature || '--'}°C / <span class="font-bold ${bin.odourStatus === 'High Odour' ? 'text-rose-400' : 'text-slate-300'}">${bin.odourStatus || 'Normal'}</span>
                     </td>
-                    <td class="p-3 text-slate-300 text-[11px]">${bin.capacity || '500L'} • ${bin.category || 'Mixed'}</td>
+                    <td class="p-3 text-slate-300 text-[11px]">${bin.capacity \vert{}\vert{} '500L'} •${bin.category || 'Mixed'}</td>
                     <td class="p-3 text-right space-x-1.5">
                         <button onclick="focusMapOnDustbin('${bin.id}')" class="px-2.5 py-1 bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700 text-emerald-200 text-[10px] rounded-lg font-bold">🗺️ Map</button>
                         <button onclick="spawnRadialOffsetDots('${bin.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] rounded-lg font-bold">🎯 5 Multipliers</button>
@@ -1493,7 +1487,7 @@
                 status: "Dispatched",
                 assignedWorker: workerName
             }).then(() => {
-                showToast(`🚚 ${workerName} dispatched to ${selectedComplaintIdForDispatch}`);
+                showToast(`🚚 ${workerName} dispatched to${selectedComplaintIdForDispatch}`);
                 closeDispatchModal();
             });
         }
@@ -1569,3 +1563,9 @@
     </script>
 </body>
 </html>
+```To hide the raw latitude/longitude coordinates and mask or remove citizen phone numbers while keeping municipal worker contacts visible, you can apply privacy filters directly in your frontend rendering logic.
+
+Here is how to sanitize the UI data before displaying it:
+
+### 1. Hide Coordinates and Show Clean Location Names
+Instead of rendering raw `lat` and `lng
