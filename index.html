@@ -456,7 +456,7 @@
 
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Area / Landmark Name</label>
-                    <input type="text" id="binNameInput" placeholder="e.g. Shivaji Chowk North Corner" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    <input type="text" id="binNameInput" placeholder="e.g. Ward 1 North Corner" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -506,7 +506,7 @@
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Assigned Ward</label>
-                    <input type="text" id="workerWardInput" placeholder="Ward 1 - Shivaji Chowk" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                    <input type="text" id="workerWardInput" placeholder="Ward 1 - Central Market" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
                 </div>
                 <div>
                     <label class="text-[10px] font-black uppercase text-slate-400">Vehicle Number</label>
@@ -578,7 +578,7 @@
         let complaints = [];
         let municipalDustbins = [];
         let workers = [
-            { id: "W101", name: "Raju Shinde", phone: "9822110022", vehicle: "MH-17-AG-4421", ward: "Ward 1 - Shivaji Chowk", status: "On Duty", activeTasks: 0, completed: 34 },
+            { id: "W101", name: "Raju Shinde", phone: "9822110022", vehicle: "MH-17-AG-4421", ward: "Ward 1 - Central Market", status: "On Duty", activeTasks: 0, completed: 34 },
             { id: "W102", name: "Sunita Jadhav", phone: "9822110033", vehicle: "MH-17-AG-1092", ward: "Ward 2 - Station Road", status: "On Duty", activeTasks: 0, completed: 28 },
             { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - River Bank Area", status: "On Duty", activeTasks: 0, completed: 45 }
         ];
@@ -791,7 +791,16 @@
 
         function sanitizeText(txt) {
             if (!txt) return "";
-            return String(txt);
+            return String(txt)
+                .replace(/\(?\s*Shivaji\s*Chowk\s*\)?/gi, '')
+                .replace(/\(?\s*-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+\s*\)?/gi, '')
+                .replace(/\b\d{2}\.\d{3,}\b/gi, '')
+                .replace(/\b[6-9]\d{9}\b/gi, '')
+                .replace(/\b\d{10}\b/gi, '')
+                .replace(/\(\s*\)/g, '')
+                .replace(/Spot\s*\(\s*\)/gi, 'City Spot')
+                .replace(/\s{2,}/g, ' ')
+                .trim() || 'City Sanitation Spot';
         }
 
         function formatDateTime(timestamp) {
@@ -1008,7 +1017,7 @@
                         <p class="text-[10px] text-slate-500">🕒 Filed: ${filedDateString}</p>
                         <p class="text-[10px] text-slate-600 line-clamp-2">${sanitizeText(item.comment)}</p>
                         <div class="flex items-center justify-between pt-1">
-                            <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-emerald-700 underline">Open Google Maps ↗</a>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-emerald-700 underline">Directions ↗</a>
                             <button onclick="openDispatchModal('${item.id}')" class="text-[9px] font-black text-emerald-800 hover:underline">Dispatch Crew</button>
                         </div>
                     </div>
@@ -1086,7 +1095,7 @@
                                 <span>Show 5 Multiplier Dots</span>
                             </button>
                             <div class="flex items-center justify-between text-[10px] font-bold px-1">
-                                <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-emerald-700 underline">Google Maps ↗</a>
+                                <a href="https://www.google.com/maps/dir/?api=1&destination=${pt[0]},${pt[1]}" target="_blank" class="text-emerald-700 underline">Directions ↗</a>
                                 <button onclick="deleteDustbin('${bin.id}')" class="text-rose-600 hover:underline">Delete</button>
                             </div>
                         </div>
@@ -1185,7 +1194,7 @@
             tbody.innerHTML = "";
 
             if (complaints.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
                 return;
             }
 
@@ -1231,7 +1240,7 @@
                     </td>
                     <td class="p-3">
                         <span class="font-bold text-slate-200 block">${cleanLandmark}</span>
-                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-emerald-400 underline">View Location ↗</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-emerald-400 underline">Directions ↗</a>
                     </td>
                     <td class="p-3">
                         <p class="text-slate-300 text-xs line-clamp-2">${sanitizeText(item.comment)}</p>
