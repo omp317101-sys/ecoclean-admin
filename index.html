@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eco Clean City - Municipal Admin Command</title>
+    <title>Eco Clean City - Municipal Command Center</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,124 +50,508 @@
             background-color: #06170A;
             color: #1E293B;
             height: 100%;
-            margin: 0;
-            padding: 0;
+            scroll-behavior: smooth;
         }
         .leaflet-container {
             width: 100%;
             height: 100%;
-            border-radius: 20px;
+            border-radius: 18px;
             z-index: 1;
         }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #1B5E20; border-radius: 8px; }
+
+        .hero-bg {
+            background-image: linear-gradient(to bottom, rgba(6, 23, 10, 0.82), rgba(8, 35, 11, 0.94)), 
+                              url('https://images.unsplash.com/photo-1526951521990-620dc14c214b?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+
         .bin-critical-pulse {
             animation: pulse-ring 1.5s infinite cubic-bezier(0.66, 0, 1);
         }
         @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); transform: scale(0.96); }
-            70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); transform: scale(1.05); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(0.96); }
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); }
+            70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .complaint-pulse {
-            animation: complaint-ring 1.8s infinite cubic-bezier(0.66, 0, 1);
+
+        .offset-multiplier-dot {
+            min-width: 32px;
+            height: 26px;
+            padding: 0 6px;
+            border-radius: 13px;
+            background: #10B981;
+            border: 2px solid #FFFFFF;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            font-family: monospace;
+            cursor: pointer;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.9);
+            animation: target-pulse 1.8s infinite;
+            white-space: nowrap;
         }
-        @keyframes complaint-ring {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.85); transform: scale(0.95); }
-            70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); transform: scale(1.05); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); transform: scale(0.95); }
+        @keyframes target-pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(16, 185, 129, 1); }
+            100% { transform: scale(0.95); }
         }
     </style>
 </head>
-<body class="h-full bg-[#06170A] text-slate-100 antialiased selection:bg-emerald-600 selection:text-white flex justify-center">
+<body class="h-full bg-[#06170A] text-slate-100 antialiased selection:bg-emerald-600 selection:text-white flex flex-col">
 
-    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden max-w-xs w-full p-3.5 rounded-2xl shadow-2xl text-xs font-bold text-center border transition-all pointer-events-none"></div>
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm w-full p-3.5 rounded-2xl shadow-2xl text-xs font-bold border transition-all pointer-events-none"></div>
 
-    <div class="w-full max-w-5xl h-full min-h-screen bg-[#0A1D0E] shadow-2xl relative flex flex-col overflow-x-hidden border-x border-emerald-950/40">
+    <!-- ================= AUTH VIEW ================= -->
+    <main id="authSection" class="flex-1 flex items-center justify-center hero-bg p-6 relative">
+        <div class="max-w-md w-full bg-[#0b2410]/90 backdrop-blur-xl border border-emerald-500/30 rounded-3xl p-8 shadow-2xl space-y-6 relative z-10">
+            <div class="text-center space-y-3">
+                <div class="w-20 h-20 mx-auto rounded-full bg-white p-1 shadow-2xl border-2 border-emerald-400/50 flex items-center justify-center overflow-hidden">
+                    <img src="logo.png" onerror="this.onerror=null; this.src='https://api.iconify.design/fluent-emoji:wastebasket.svg';" alt="Eco Clean City Logo" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight text-white">Command Center</h1>
+                    <p class="text-xs text-emerald-200/90 font-bold uppercase tracking-wider">Eco Clean City • Municipal Admin Desk</p>
+                    <p class="text-[10px] text-emerald-300/70 font-mono mt-0.5">City Municipal Council Grid</p>
+                </div>
+            </div>
 
-        <!-- Command Header -->
-        <header class="bg-gradient-to-r from-[#08230B] via-[#154A19] to-[#08230B] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-lg border-b border-emerald-500/20">
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-emerald-300/80">Admin User ID</label>
+                    <input type="text" id="adminUser" value="sanjivani" required class="w-full mt-1 px-4 py-2.5 text-xs font-bold rounded-xl bg-black/50 border border-emerald-900/80 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-emerald-300/80">Security Password</label>
+                    <input type="password" id="adminPass" value="sai@12" required class="w-full mt-1 px-4 py-2.5 text-xs font-bold rounded-xl bg-black/50 border border-emerald-900/80 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-ecoGreen-600 hover:from-emerald-500 hover:to-ecoGreen-500 text-white font-extrabold py-3 rounded-xl shadow-lg text-xs uppercase tracking-wider active:scale-95 transition-all border border-emerald-400/30">
+                    Authorize & Launch Console
+                </button>
+            </form>
+            <div class="flex items-center justify-between text-[11px] pt-1">
+                <button type="button" onclick="navigateBack()" class="text-emerald-300/80 hover:text-white font-bold flex items-center gap-1">
+                    ← Back
+                </button>
+                <span class="text-emerald-300/60 text-[10px]">Access: sanjivani / sai@12</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= ADMIN DASHBOARD ================= -->
+    <div id="mainSection" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+        
+        <header class="bg-[#08230B] border-b border-emerald-950/80 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-white p-1 border border-emerald-400/40 flex items-center justify-center overflow-hidden">
+                <button type="button" onclick="navigateBack()" title="Go Back to Previous Interface" class="px-3 py-1.5 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-800/70 text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+                    <span>←</span>
+                    <span class="hidden sm:inline">Back</span>
+                </button>
+
+                <div class="w-10 h-10 rounded-full bg-white p-0.5 border border-emerald-400/40 flex items-center justify-center overflow-hidden">
                     <img src="logo.png" onerror="this.onerror=null; this.src='https://api.iconify.design/fluent-emoji:wastebasket.svg';" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-base leading-tight flex items-center gap-2">
-                        Eco Clean City
-                        <span class="text-[9px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30 uppercase font-black">Admin Grid</span>
+                    <h1 class="font-extrabold text-sm text-white tracking-wide flex items-center gap-2">
+                        Eco Clean City Command
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">● IoT Cloud Live</span>
                     </h1>
-                    <p class="text-[10px] text-emerald-300/80 uppercase font-bold tracking-wider">Sanitation Command & Smart Ward Management</p>
+                    <p class="text-[10px] text-emerald-300/70">City Civic Sanitation, Smart Bins & Fleet Operations</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 text-xs font-extrabold">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/40 border border-emerald-900/60">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="text-[11px] text-emerald-300">Live IoT Sync</span>
+            <div class="flex items-center gap-3">
+                <div class="bg-black/40 p-1 rounded-xl border border-emerald-900/60 flex text-xs font-bold gap-1">
+                    <button onclick="scrollToSection('sectionMap')" class="px-3 py-1.5 rounded-lg bg-emerald-700 text-white shadow-sm hover:bg-emerald-600 transition-colors">
+                        🗺️ Live Map
+                    </button>
+                    <button onclick="scrollToSection('sectionComplaints')" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-emerald-950/40 transition-colors">
+                        📢 Complaints (<span id="totalComplaintsBadge">0</span>)
+                    </button>
+                    <button onclick="scrollToSection('sectionDustbins')" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-emerald-950/40 transition-colors">
+                        🗑️ Smart Bins (<span id="totalBinsCountBadge">0</span>)
+                    </button>
+                    <button onclick="switchAdminTab('workers')" id="tabBtnWorkers" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white">
+                        👷 Crew (<span id="activeCrewCount">0</span>)
+                    </button>
                 </div>
+                <button onclick="handleAdminLogout()" class="px-3 py-1.5 text-xs bg-emerald-950/50 hover:bg-emerald-900 border border-emerald-800/40 text-emerald-300 font-bold rounded-xl active:scale-95 transition-all">
+                    Logout
+                </button>
             </div>
         </header>
 
-        <!-- Command KPI Row -->
-        <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3 bg-[#08180B] border-b border-emerald-950/60">
-            <div class="p-3 bg-[#0D2411] border border-emerald-950 rounded-2xl">
-                <span class="text-[10px] uppercase font-black text-slate-400 block">Critical Bins (&ge;80%)</span>
-                <h3 class="text-xl font-extrabold text-rose-400" id="kpiCriticalBins">0</h3>
-            </div>
-            <div class="p-3 bg-[#0D2411] border border-emerald-950 rounded-2xl">
-                <span class="text-[10px] uppercase font-black text-slate-400 block">Moderate Bins</span>
-                <h3 class="text-xl font-extrabold text-amber-400" id="kpiModerateBins">0</h3>
-            </div>
-            <div class="p-3 bg-[#0D2411] border border-emerald-950 rounded-2xl">
-                <span class="text-[10px] uppercase font-black text-slate-400 block">Pending Grievances</span>
-                <h3 class="text-xl font-extrabold text-amber-300" id="kpiPendingComplaints">0</h3>
-            </div>
-            <div class="p-3 bg-[#0D2411] border border-emerald-950 rounded-2xl">
-                <span class="text-[10px] uppercase font-black text-slate-400 block">Cleaned & Resolved</span>
-                <h3 class="text-xl font-extrabold text-emerald-400" id="kpiResolvedComplaints">0</h3>
-            </div>
-        </div>
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
 
-        <!-- Main Map Area -->
-        <main class="flex-1 p-4 space-y-4 overflow-y-auto">
-            <div class="bg-[#0D2411] border border-emerald-950/80 rounded-3xl p-4 shadow-sm space-y-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-[#0b2410] border border-emerald-900/60 p-4 rounded-2xl shadow-sm">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Grievances</span>
+                    <h3 id="statTotal" class="text-2xl font-black text-white mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Live from City residents</p>
+                </div>
+                <div class="bg-[#0b2410] border border-emerald-900/60 p-4 rounded-2xl shadow-sm">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-rose-400">Pending Triage</span>
+                    <h3 id="statPending" class="text-2xl font-black text-rose-400 mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Needs crew dispatch</p>
+                </div>
+                <div class="bg-[#0b2410] border border-emerald-900/60 p-4 rounded-2xl shadow-sm">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Municipal Smart Bins</span>
+                    <h3 id="statTotalBins" class="text-2xl font-black text-amber-400 mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">IoT Live Telemetry Grid</p>
+                </div>
+                <div class="bg-[#0b2410] border border-emerald-900/60 p-4 rounded-2xl shadow-sm">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400">On-Duty Sanitation Crew</span>
+                    <h3 id="statOnDutyWorkers" class="text-2xl font-black text-emerald-400 mt-1">0</h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Active across City Wards</p>
+                </div>
+            </div>
+
+            <!-- VIEW 1: MAP, COMPLAINTS & DUSTBINS -->
+            <div id="viewOverview" class="space-y-6">
+                
+                <!-- MAP SECTION WITH 5-MULTIPLIER STEP OFFSET CONTROLLER -->
+                <div id="sectionMap" class="bg-[#0b2410] border border-emerald-900/60 rounded-3xl p-5 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-950/80 pb-3">
+                        <div>
+                            <h2 class="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                                <span>🗺️</span> City Geographic Command Map
+                            </h2>
+                            <p class="text-[11px] text-emerald-300/70">
+                                ⚡ Centered on City. Click any bin to spawn 5 multiplier dots. Existing bins are locked!
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 bg-black/50 p-1.5 rounded-2xl border border-emerald-900/60">
+                            <div class="flex items-center gap-1 pl-1">
+                                <span class="text-[10px] font-bold text-slate-400">Step Distance:</span>
+                                <input type="number" id="multiplierBaseStepInput" value="25" min="5" max="5000" oninput="onMultiplierStepChanged()" class="w-20 bg-slate-900 border border-emerald-950 text-emerald-300 rounded-lg text-xs font-mono font-bold px-2 py-1 text-center focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <span class="text-[10px] font-mono text-slate-400">m (×1 to ×5)</span>
+                            </div>
+
+                            <div class="flex items-center gap-1 pl-1 border-l border-emerald-950">
+                                <span class="text-[10px] font-bold text-slate-400">Direction:</span>
+                                <select id="mapGlobalOffsetDirection" onchange="onMultiplierDirectionChanged(this.value)" class="bg-slate-900 border border-emerald-950 text-emerald-300 rounded-lg text-xs font-bold px-2 py-1 focus:outline-none">
+                                    <option value="0">North (0°)</option>
+                                    <option value="45">North-East (45°)</option>
+                                    <option value="90" selected>East (90°)</option>
+                                    <option value="135">South-East (135°)</option>
+                                    <option value="180">South (180°)</option>
+                                    <option value="225">South-West (225°)</option>
+                                    <option value="270">West (270°)</option>
+                                    <option value="315">North-West (315°)</option>
+                                </select>
+                            </div>
+
+                            <button onclick="clearMapOffsetRays()" id="clearRaysBtn" class="hidden px-2.5 py-1 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 rounded-lg text-[10px] font-extrabold active:scale-95 transition-all">
+                                ✕ Clear Dots
+                            </button>
+
+                            <button onclick="openDustbinModal(null)" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-extrabold flex items-center gap-1 active:scale-95 transition-all shadow ml-1">
+                                <span>📍</span>
+                                <span>Custom Bin</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Offset Active Banner -->
+                    <div id="offsetActiveBanner" class="hidden p-3 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span>Projecting 5 multiplier dots from <b id="offsetActiveBinName" class="text-white">Bin</b>:</span>
+                            <span id="offsetMultipliersSummary" class="font-mono font-bold text-emerald-300 text-[11px]"></span>
+                        </div>
+                        
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[10px] font-bold text-slate-300">Batch Add:</span>
+                            <button onclick="deployMultipleBins(1)" class="px-2 py-1 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-white rounded-lg text-[10px] font-bold active:scale-95">+1 Bin</button>
+                            <button onclick="deployMultipleBins(2)" class="px-2 py-1 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-white rounded-lg text-[10px] font-bold active:scale-95">+2 Bins</button>
+                            <button onclick="deployMultipleBins(3)" class="px-2 py-1 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-white rounded-lg text-[10px] font-bold active:scale-95">+3 Bins</button>
+                            <button onclick="deployMultipleBins(4)" class="px-2 py-1 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-white rounded-lg text-[10px] font-bold active:scale-95">+4 Bins</button>
+                            <button onclick="deployMultipleBins(5)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-lg text-[10px] shadow active:scale-95">🚀 Add All 5</button>
+                            <button onclick="clearMapOffsetRays()" class="text-xs font-bold text-slate-400 hover:text-white pl-2">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="h-96 w-full rounded-2xl overflow-hidden border border-emerald-950 relative">
+                        <div id="adminLiveMap" class="w-full h-full"></div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: MANAGE COMPLAINTS -->
+                <div id="sectionComplaints" class="bg-[#0b2410] border border-emerald-900/60 rounded-3xl p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
+                                <span>📢</span> City Grievances Ledger
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Select multiple resolved tickets to mass purge from database.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="batchDeleteResolvedComplaints()" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 border border-rose-800 text-rose-200 text-xs font-extrabold rounded-xl shadow active:scale-95 transition-all flex items-center gap-1.5">
+                                <span>🗑️</span>
+                                <span>Delete Selected Resolved (<span id="selectedComplaintCountBadge">0</span>)</span>
+                            </button>
+                            <span id="complaintTableCount" class="text-xs bg-black/40 border border-emerald-900/60 px-2.5 py-1 rounded-full font-bold text-emerald-300">
+                                0 Total
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-black/50 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-emerald-950">
+                                <tr>
+                                    <th class="p-3">
+                                        <input type="checkbox" id="selectAllComplaintsBox" onchange="toggleSelectAllComplaints(this.checked)" class="accent-emerald-600 rounded cursor-pointer">
+                                    </th>
+                                    <th class="p-3">ID & Timestamps</th>
+                                    <th class="p-3">Citizen</th>
+                                    <th class="p-3">Photos (Before / After)</th>
+                                    <th class="p-3">Location</th>
+                                    <th class="p-3">Grievance Note</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Assigned Crew</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complaintsTableBody" class="divide-y divide-emerald-950/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: MANAGE DUSTBINS -->
+                <div id="sectionDustbins" class="bg-[#0b2410] border border-emerald-900/60 rounded-3xl p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-black uppercase tracking-wider text-white flex items-center gap-2">
+                                <span>🗑️</span> City Smart Bins & Telemetry
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Deployed IoT smart bins with ultrasonic fill, odour, and thermal monitoring.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="batchDeleteDustbins()" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 border border-rose-800 text-rose-200 text-xs font-extrabold rounded-xl shadow active:scale-95 transition-all flex items-center gap-1.5">
+                                <span>🗑️</span>
+                                <span>Delete Selected Bins (<span id="selectedBinCountBadge">0</span>)</span>
+                            </button>
+                            <button onclick="openDustbinModal(null)" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5">
+                                <span>📍</span>
+                                <span>Add / Offset Bin</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-black/50 text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-emerald-950">
+                                <tr>
+                                    <th class="p-3">
+                                        <input type="checkbox" id="selectAllBinsBox" onchange="toggleSelectAllBins(this.checked)" class="accent-emerald-600 rounded cursor-pointer">
+                                    </th>
+                                    <th class="p-3">Bin ID</th>
+                                    <th class="p-3">Area / Landmark Name</th>
+                                    <th class="p-3">Live Fill Level</th>
+                                    <th class="p-3">Temp / Odour Status</th>
+                                    <th class="p-3">Capacity & Waste Type</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dustbinsTableBody" class="divide-y divide-emerald-950/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- VIEW 2: WORKERS ROSTER -->
+            <div id="viewWorkers" class="hidden space-y-4">
+                <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xs font-black uppercase text-white flex items-center gap-2">
-                            <span>🗺️</span> Municipal Live Sanitation Map
-                        </h2>
-                        <p class="text-[10px] text-slate-400">Click any colored pin to inspect ward data</p>
+                        <h2 class="text-sm font-black text-white">Sanitation Crew & Fleet Directory</h2>
+                        <p class="text-xs text-slate-400">Manage field workers and live duty status in City</p>
                     </div>
-
-                    <!-- Legend -->
-                    <div class="flex items-center gap-3 text-[10px] font-bold px-3 py-1.5 bg-[#08180B] rounded-xl border border-emerald-950">
-                        <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Bin &lt;50%</span>
-                        <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Bin 50-79%</span>
-                        <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span> Bin &ge;80%</span>
-                        <span class="flex items-center gap-1.5 text-amber-300"><span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span> Citizen Report</span>
+                    <div class="flex gap-2">
+                        <button onclick="switchAdminTab('overview')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl">
+                            ← Back to Command View
+                        </button>
+                        <button onclick="openWorkerModal(null)" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all">
+                            + Register New Crew Member
+                        </button>
                     </div>
                 </div>
 
-                <div class="h-96 w-full rounded-2xl overflow-hidden border border-emerald-950 relative shadow-inner">
-                    <div id="adminCommandMap" class="w-full h-full"></div>
-                </div>
-            </div>
-
-            <!-- Grievance & Dispatch Queue -->
-            <div class="bg-[#0D2411] border border-emerald-950/80 rounded-3xl p-4 shadow-sm space-y-3">
-                <div class="flex items-center justify-between border-b border-emerald-950 pb-2">
-                    <h3 class="text-xs font-black uppercase text-white flex items-center gap-2">
-                        <span>📢</span> Recent Citizen Grievance Submissions
-                    </h3>
-                    <span class="text-[10px] font-extrabold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-500/30">City Ledger</span>
-                </div>
-
-                <div id="adminGrievanceList" class="space-y-3">
-                    <div class="text-center py-8 text-xs text-slate-500">Listening for incoming municipal complaints...</div>
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="workersRosterGrid"></div>
             </div>
         </main>
     </div>
 
-    <!-- SCRIPT & FIREBASE -->
+    <!-- DUSTBIN MODAL -->
+    <div id="dustbinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0b2410] border border-emerald-900/80 rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-emerald-950 pb-3">
+                <h3 class="text-sm font-black text-white" id="dustbinModalTitle">Place Smart Bin on Map</h3>
+                <button onclick="closeDustbinModal()" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+            </div>
+            
+            <form onsubmit="handleSaveDustbin(event)" class="space-y-3.5">
+                <input type="hidden" id="editBinId">
+                <input type="hidden" id="binLatInput" value="19.891500">
+                <input type="hidden" id="binLngInput" value="74.478900">
+
+                <div class="p-3 bg-black/50 border border-emerald-900/60 rounded-2xl space-y-2">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                        <span>📐</span> Offset from Existing Bin (25m, 50m, 100m, etc.)
+                    </span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 block">Reference Dustbin</label>
+                            <select id="offsetSourceBinSelect" onchange="applyReferenceBinSelection()" class="w-full mt-1 px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-900 border border-emerald-950 text-white focus:outline-none">
+                                <option value="">-- Manual Pin / None --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 block">Distance</label>
+                            <div class="flex gap-1 mt-1">
+                                <select id="offsetDistancePreset" onchange="applyOffsetDistancePreset(this.value)" class="w-20 px-2 py-1.5 text-xs font-bold rounded-xl bg-slate-900 border border-emerald-950 text-white focus:outline-none">
+                                    <option value="25">25 m</option>
+                                    <option value="50" selected>50 m</option>
+                                    <option value="100">100 m</option>
+                                    <option value="150">150 m</option>
+                                    <option value="200">200 m</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                                <input type="number" id="offsetDistanceMeters" value="50" min="1" max="10000" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-900 border border-emerald-950 text-white focus:outline-none" placeholder="Meters">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-slate-400 block">Direction (Bearing)</label>
+                            <select id="offsetDirectionSelect" onchange="computeAndSetOffsetLocation()" class="w-full mt-1 px-2.5 py-1.5 text-xs font-bold rounded-xl bg-slate-900 border border-emerald-950 text-white focus:outline-none">
+                                <option value="0">North (0°)</option>
+                                <option value="45">North-East (45°)</option>
+                                <option value="90" selected>East (90°)</option>
+                                <option value="135">South-East (135°)</option>
+                                <option value="180">South (180°)</option>
+                                <option value="225">South-West (225°)</option>
+                                <option value="270">West (270°)</option>
+                                <option value="315">North-West (315°)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" onclick="computeAndSetOffsetLocation()" class="w-full py-1.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700/60 text-[10px] font-black rounded-lg active:scale-95 transition-all">
+                        ⚡ Shift Pin By Distance
+                    </button>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black uppercase text-emerald-300/80 block">Map Pin Placement (Drag pin or tap map)</label>
+                    <div class="h-52 w-full rounded-2xl overflow-hidden border border-emerald-950 relative shadow-inner">
+                        <div id="binPickerMap" class="w-full h-full"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Area / Landmark Name</label>
+                    <input type="text" id="binNameInput" placeholder="e.g. Shivaji Chowk North Corner" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Bin Capacity</label>
+                        <select id="binCapacityInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                            <option value="240L">240 Liters</option>
+                            <option value="500L" selected>500 Liters</option>
+                            <option value="1100L">1100 Liters</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400">Waste Segregation</label>
+                        <select id="binCategoryInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                            <option value="Dry & Plastic Waste">Dry & Plastic</option>
+                            <option value="Wet & Biodegradable">Wet Waste</option>
+                            <option value="Mixed Municipal Waste" selected>Mixed Waste</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeDustbinModal()" class="flex-1 py-2.5 bg-black/40 text-slate-300 font-bold text-xs rounded-xl">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">Save & Pin Dustbin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- WORKER REGISTRATION MODAL -->
+    <div id="workerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0b2410] border border-emerald-900/80 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-emerald-950 pb-3">
+                <h3 class="text-sm font-black text-white" id="workerModalTitle">Register Crew Member</h3>
+                <button onclick="closeWorkerModal()" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+            </div>
+            
+            <form onsubmit="handleSaveWorker(event)" class="space-y-3">
+                <input type="hidden" id="editWorkerId">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Full Name</label>
+                    <input type="text" id="workerNameInput" placeholder="e.g. Ramesh Kadam" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Phone Number (10 Digits)</label>
+                    <input type="tel" id="workerPhoneInput" placeholder="9822XXXXXX" pattern="[0-9]{10}" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Assigned Ward</label>
+                    <input type="text" id="workerWardInput" placeholder="Ward 1 - Shivaji Chowk" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Vehicle Number</label>
+                    <input type="text" id="workerVehicleInput" placeholder="MH-17-AB-1234" required class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400">Duty Status</label>
+                    <select id="workerStatusInput" class="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl bg-black/50 border border-emerald-950 text-white focus:outline-none">
+                        <option value="On Duty">On Duty</option>
+                        <option value="On Break">On Break</option>
+                        <option value="Off Duty">Off Duty</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeWorkerModal()" class="flex-1 py-2.5 bg-black/40 text-slate-300 font-bold text-xs rounded-xl">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">Save Worker</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DISPATCH MODAL -->
+    <div id="dispatchModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0b2410] border border-emerald-900/80 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-emerald-950 pb-3">
+                <h3 class="text-sm font-black text-white">Dispatch Sanitation Crew</h3>
+                <button onclick="closeDispatchModal()" class="text-slate-400 hover:text-white font-bold text-xs">✕</button>
+            </div>
+            <div>
+                <p class="text-xs text-slate-300" id="dispatchModalSubtitle">Assign a crew member</p>
+            </div>
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1" id="dispatchWorkerList"></div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeDispatchModal()" class="flex-1 py-2.5 bg-black/40 text-slate-300 font-bold text-xs rounded-xl">Cancel</button>
+                <button onclick="confirmDispatch()" class="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all">Confirm & Dispatch</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX MODAL -->
+    <div id="imageLightbox" onclick="closeLightbox()" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer">
+        <img id="lightboxImg" src="" class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10">
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDmm0D5e4jtjMb470bjb6_pqe__uGt6Xkc",
@@ -183,86 +567,479 @@
         const db = firebase.database();
 
         const CITY_CENTER = [19.8915, 74.4789];
-        let mapInstance = null;
-        let dustbinMarkers = {};
-        let complaintMarkers = {};
+        let map = null;
+        let mapMarkers = [];
+        let binMarkers = [];
+        let selectedComplaintIdForDispatch = null;
 
-        // Utility: Strip out raw coordinates, phone numbers, and redundant strings
-        function cleanDisplayLabel(str) {
-            if (!str) return 'City Sanitation Spot';
-            return String(str)
-                .replace(/\(?\s*Shivaji\s*Chowk\s*\)?/gi, '')
-                .replace(/\(?\s*-?\d{1,3}\.\d+[\s,]+-?\d{1,3}\.\d+\s*\)?/gi, '') // Strips (19.89, 74.47)
-                .replace(/\b\d{2}\.\d{3,}\b/gi, '')                                // Strips standalone float coords
-                .replace(/\b[6-9]\d{9}\b/gi, '')                                   // Strips 10-digit mobile
-                .replace(/\b\d{10}\b/gi, '')
-                .replace(/\(\s*\)/g, '')
-                .replace(/Spot\s*\(\s*\)/gi, 'City Spot')
-                .replace(/\s{2,}/g, ' ')
-                .trim() || 'City Sanitation Spot';
+        let pickerMapInstance = null;
+        let pickerMarker = null;
+
+        let complaints = [];
+        let municipalDustbins = [];
+        let workers = [
+            { id: "W101", name: "Raju Shinde", phone: "9822110022", vehicle: "MH-17-AG-4421", ward: "Ward 1 - Shivaji Chowk", status: "On Duty", activeTasks: 0, completed: 34 },
+            { id: "W102", name: "Sunita Jadhav", phone: "9822110033", vehicle: "MH-17-AG-1092", ward: "Ward 2 - Station Road", status: "On Duty", activeTasks: 0, completed: 28 },
+            { id: "W103", name: "Ganesh Pawar", phone: "9822110044", vehicle: "MH-17-AG-8833", ward: "Ward 3 - River Bank Area", status: "On Duty", activeTasks: 0, completed: 45 }
+        ];
+
+        let selectedComplaintIds = new Set();
+        let selectedDustbinIds = new Set();
+
+        let activeOffsetRays = [];
+        let activeSourceBinForOffset = null;
+        let currentCalculatedPoints = [];
+
+        function navigateBack() {
+            const workersView = document.getElementById('viewWorkers');
+            if (workersView && !workersView.classList.contains('hidden')) {
+                switchAdminTab('overview');
+                return;
+            }
+
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                handleAdminLogout();
+            }
         }
 
-        function showToast(message, isError = false) {
+        function onMultiplierStepChanged() {
+            if (activeSourceBinForOffset) {
+                spawnRadialOffsetDots(activeSourceBinForOffset.id);
+            }
+        }
+
+        function onMultiplierDirectionChanged(bearingVal) {
+            if (activeSourceBinForOffset) {
+                spawnRadialOffsetDots(activeSourceBinForOffset.id, parseFloat(bearingVal));
+            }
+        }
+
+        function clearMapOffsetRays() {
+            activeOffsetRays.forEach(layer => map && map.removeLayer(layer));
+            activeOffsetRays = [];
+            currentCalculatedPoints = [];
+            activeSourceBinForOffset = null;
+            document.getElementById('clearRaysBtn').classList.add('hidden');
+            document.getElementById('offsetActiveBanner').classList.add('hidden');
+        }
+
+        function spawnRadialOffsetDots(binId, customBearing = null) {
+            clearMapOffsetRays();
+            const bin = municipalDustbins.find(b => b.id === binId);
+            if (!bin) return;
+
+            activeSourceBinForOffset = bin;
+            const pt = extractCoords(bin.coords) || extractCoords([bin.lat, bin.lng]);
+            if (!pt) return;
+
+            const baseStep = parseFloat(document.getElementById('multiplierBaseStepInput').value) || 25;
+            const bearing = (customBearing !== null) ? customBearing : parseFloat(document.getElementById('mapGlobalOffsetDirection').value) || 90;
+
+            const multipliers = [1, 2, 3, 4, 5];
+            const distanceList = multipliers.map(m => m * baseStep);
+
+            document.getElementById('offsetActiveBinName').innerText = sanitizeText(bin.name);
+            document.getElementById('offsetMultipliersSummary').innerText = distanceList.map(d => `${d}m`).join(' → ');
+            document.getElementById('clearRaysBtn').classList.remove('hidden');
+            document.getElementById('offsetActiveBanner').classList.remove('hidden');
+
+            const rayLinePoints = [pt];
+            currentCalculatedPoints = [];
+
+            distanceList.forEach((dist, idx) => {
+                const targetCoord = computeDestinationPoint(pt[0], pt[1], dist, bearing);
+                rayLinePoints.push([targetCoord.lat, targetCoord.lng]);
+
+                currentCalculatedPoints.push({
+                    index: idx + 1,
+                    distance: dist,
+                    lat: targetCoord.lat,
+                    lng: targetCoord.lng
+                });
+
+                const dotIcon = L.divIcon({
+                    html: `<div class="offset-multiplier-dot" title="Dot #${idx + 1} at +${dist}m">+${dist}m</div>`,
+                    className: '',
+                    iconSize: [36, 26],
+                    iconAnchor: [18, 13]
+                });
+
+                const dotMarker = L.marker([targetCoord.lat, targetCoord.lng], { icon: dotIcon }).addTo(map);
+
+                dotMarker.bindPopup(`
+                    <div class="p-2.5 max-w-[210px] font-sans text-slate-900 space-y-2">
+                        <div class="border-b pb-1">
+                            <span class="text-[9px] font-black uppercase text-emerald-800 tracking-wider">🎯 Dot #${idx + 1} (Multiple ×${idx + 1})</span>
+                            <h4 class="font-extrabold text-xs text-slate-900 mt-0.5">${dist} Meters from ${sanitizeText(bin.name)}</h4>
+                        </div>
+                        <p class="text-[10px] text-slate-600">Direction: <b>${bearing}°</b> (${getCompassDirectionLabel(bearing)})</p>
+                        
+                        <div class="pt-1 space-y-1">
+                            <button onclick="deploySingleBinAtPoint(${idx})" class="w-full py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[11px] rounded-lg shadow active:scale-95 transition-all flex items-center justify-center gap-1">
+                                <span>➕</span>
+                                <span>Add This Bin (#${idx + 1} at ${dist}m)</span>
+                            </button>
+                            ${(idx > 0) ? `
+                                <button onclick="deployMultipleBins(${idx + 1})" class="w-full py-1 bg-slate-900 hover:bg-slate-800 text-emerald-300 font-bold text-[10px] rounded-lg border border-emerald-950 active:scale-95">
+                                    Add 1 to ${idx + 1} All At Once (${idx + 1} Bins)
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `);
+
+                activeOffsetRays.push(dotMarker);
+            });
+
+            const guideLine = L.polyline(rayLinePoints, {
+                color: '#10B981',
+                weight: 2.5,
+                dashArray: '5, 8',
+                opacity: 0.85
+            }).addTo(map);
+
+            activeOffsetRays.push(guideLine);
+            map.setView(pt, 16, { animate: true });
+            showToast(`🎯 5 Multipliers (+${distanceList.join('m, +')}m) projected from ${sanitizeText(bin.name)}`);
+        }
+
+        function getCompassDirectionLabel(bearing) {
+            const directions = ['North', 'North-East', 'East', 'South-East', 'South', 'South-West', 'West', 'North-West'];
+            const index = Math.round(bearing / 45) % 8;
+            return directions[index];
+        }
+
+        function deploySingleBinAtPoint(pointIndex) {
+            if (!activeSourceBinForOffset || !currentCalculatedPoints[pointIndex]) return;
+            const pt = currentCalculatedPoints[pointIndex];
+            const sourceName = sanitizeText(activeSourceBinForOffset.name);
+            const newBinId = `BIN-${Math.floor(100 + Math.random() * 900)}`;
+
+            const newBinData = {
+                id: newBinId,
+                name: `${sourceName} (+${pt.distance}m)`,
+                coords: [pt.lat, pt.lng],
+                lat: pt.lat,
+                lng: pt.lng,
+                capacity: "500L",
+                category: "Mixed Municipal Waste",
+                fillLevel: 5,
+                temperature: 28.0,
+                odourLevel: 300,
+                odourStatus: "Normal",
+                timestamp: Date.now()
+            };
+
+            showToast(`🛰️ Pinning bin at +${pt.distance}m from ${sourceName}...`);
+
+            db.ref('dustbins/' + newBinId).set(newBinData).then(() => {
+                showToast(`✅ Added ${newBinData.name}! Existing bin remains untouched.`);
+            }).catch(err => showToast("Save error: " + err.message, true));
+        }
+
+        function deployMultipleBins(countToAdd) {
+            if (!activeSourceBinForOffset || currentCalculatedPoints.length === 0) return;
+            const count = Math.min(countToAdd, currentCalculatedPoints.length);
+            const sourceName = sanitizeText(activeSourceBinForOffset.name);
+            const updates = {};
+            const timestamp = Date.now();
+
+            for (let i = 0; i < count; i++) {
+                const pt = currentCalculatedPoints[i];
+                const newBinId = `BIN-${Math.floor(100 + Math.random() * 900)}${i + 1}`;
+                updates['dustbins/' + newBinId] = {
+                    id: newBinId,
+                    name: `${sourceName} (+${pt.distance}m)`,
+                    coords: [pt.lat, pt.lng],
+                    lat: pt.lat,
+                    lng: pt.lng,
+                    capacity: "500L",
+                    category: "Mixed Municipal Waste",
+                    fillLevel: 5,
+                    temperature: 28.0,
+                    odourLevel: 300,
+                    odourStatus: "Normal",
+                    timestamp: timestamp + i
+                };
+            }
+
+            showToast(`🛰️ Deploying ${count} bins (1 to ${count}) at once...`);
+
+            db.ref().update(updates).then(() => {
+                showToast(`✅ Successfully deployed ${count} bins in line! Source bin kept safe.`);
+                clearMapOffsetRays();
+            }).catch(err => showToast("Batch save error: " + err.message, true));
+        }
+
+        function computeDestinationPoint(lat, lng, distanceMeters, bearingDegrees) {
+            const R = 6378137;
+            const d = distanceMeters / R;
+            const brng = (bearingDegrees * Math.PI) / 180;
+            const lat1 = (lat * Math.PI) / 180;
+            const lon1 = (lng * Math.PI) / 180;
+
+            const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brng));
+            const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+
+            return {
+                lat: (lat2 * 180) / Math.PI,
+                lng: (lon2 * 180) / Math.PI
+            };
+        }
+
+        function sanitizeText(txt) {
+            if (!txt) return "";
+            return String(txt);
+        }
+
+        function formatDateTime(timestamp) {
+            if (!timestamp) return "Date unavailable";
+            const d = new Date(timestamp);
+            return d.toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        function extractCoords(c) {
+            if (!c) return null;
+            let lat = null, lng = null;
+            if (Array.isArray(c) && c.length >= 2) {
+                lat = parseFloat(c[0]);
+                lng = parseFloat(c[1]);
+            } else if (typeof c === 'object') {
+                lat = parseFloat(c.lat || c.latitude || c[0]);
+                lng = parseFloat(c.lng || c.longitude || c[1]);
+            }
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return [lat, lng];
+        }
+
+        function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-xs w-full p-3.5 rounded-2xl shadow-2xl text-xs font-bold text-center border transition-all ${
-                isError ? 'bg-rose-900 text-white border-rose-500/50' : 'bg-emerald-900 text-white border-emerald-500/50'
+            toast.innerText = msg;
+            toast.className = `fixed top-4 right-4 z-50 max-w-sm w-full p-3.5 rounded-2xl shadow-2xl text-xs font-bold border transition-all ${
+                isError ? 'bg-rose-950 text-white border-rose-500/50' : 'bg-emerald-950 text-white border-emerald-500/50'
             }`;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
         }
 
-        function initAdminMap() {
-            if (!mapInstance) {
-                mapInstance = L.map('adminCommandMap', {
-                    zoomControl: true,
-                    scrollWheelZoom: true
-                }).setView(CITY_CENTER, 15);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapInstance);
+        function scrollToSection(sectionId) {
+            switchAdminTab('overview');
+            const el = document.getElementById(sectionId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
-        // 1. Render Smart Bins (Zero Coordinates in Popups)
-        function updateDustbinsOnMap(dustbinData) {
-            if (!mapInstance || !dustbinData) return;
+        function applyOffsetDistancePreset(val) {
+            const customInput = document.getElementById('offsetDistanceMeters');
+            if (val !== 'custom') {
+                customInput.value = val;
+            }
+            computeAndSetOffsetLocation();
+        }
 
-            let criticalCount = 0;
-            let moderateCount = 0;
+        function populateOffsetBinDropdown() {
+            const select = document.getElementById('offsetSourceBinSelect');
+            if (!select) return;
+            select.innerHTML = `<option value="">-- Manual Pin / None --</option>`;
+            municipalDustbins.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.innerText = `${b.id} - ${sanitizeText(b.name)}`;
+                select.appendChild(opt);
+            });
+        }
 
-            Object.keys(dustbinData).forEach((binId) => {
-                const bin = dustbinData[binId];
-                const lat = bin.lat || (bin.coords && bin.coords[0]);
-                const lng = bin.lng || (bin.coords && bin.coords[1]);
-                if (!lat || !lng) return;
+        function applyReferenceBinSelection() {
+            const binId = document.getElementById('offsetSourceBinSelect').value;
+            if (!binId) return;
+            const target = municipalDustbins.find(b => b.id === binId);
+            if (!target) return;
+            const pt = extractCoords(target.coords) || extractCoords([target.lat, target.lng]);
+            if (!pt) return;
+
+            updatePickerInputs(pt[0], pt[1]);
+            if (pickerMarker && pickerMapInstance) {
+                pickerMarker.setLatLng(pt);
+                pickerMapInstance.setView(pt, 17);
+            }
+            computeAndSetOffsetLocation();
+        }
+
+        function computeAndSetOffsetLocation() {
+            const baseLat = parseFloat(document.getElementById('binLatInput').value) || CITY_CENTER[0];
+            const baseLng = parseFloat(document.getElementById('binLngInput').value) || CITY_CENTER[1];
+            const distance = parseFloat(document.getElementById('offsetDistanceMeters').value) || 50;
+            const bearing = parseFloat(document.getElementById('offsetDirectionSelect').value) || 0;
+
+            const newPoint = computeDestinationPoint(baseLat, baseLng, distance, bearing);
+            updatePickerInputs(newPoint.lat, newPoint.lng);
+
+            if (pickerMarker && pickerMapInstance) {
+                pickerMarker.setLatLng([newPoint.lat, newPoint.lng]);
+                pickerMapInstance.setView([newPoint.lat, newPoint.lng], 17);
+            }
+            showToast(`📍 Pin shifted ${distance}m in direction (${bearing}°)`);
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('adminUser').value.trim();
+            const p = document.getElementById('adminPass').value.trim();
+
+            if (u === 'sanjivani' && p === 'sai@12') {
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('mainSection').classList.remove('hidden');
+                initDashboard();
+            } else {
+                showToast("Invalid credentials! Use sanjivani / sai@12", true);
+            }
+        }
+
+        function handleAdminLogout() {
+            document.getElementById('mainSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+        }
+
+        function initDashboard() {
+            db.ref('complaints').on('value', (snapshot) => {
+                const data = snapshot.val();
+                complaints = data ? Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)) : [];
+                updateMetrics();
+                renderComplaintsTable();
+                updateMapMarkers();
+            });
+
+            db.ref('dustbins').on('value', (snapshot) => {
+                const data = snapshot.val();
+                municipalDustbins = [];
+                if (data) {
+                    Object.keys(data).forEach(k => {
+                        const b = data[k];
+                        b.id = b.id || k;
+                        municipalDustbins.push(b);
+                    });
+                }
+                updateMetrics();
+                renderDustbinsTable();
+                populateOffsetBinDropdown();
+                updateMapMarkers();
+            });
+
+            db.ref('workers').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    workers = Object.values(data);
+                } else {
+                    workers.forEach(w => db.ref('workers/' + w.id).set(w));
+                }
+                updateMetrics();
+                renderWorkersRoster();
+            });
+
+            setTimeout(initMap, 200);
+        }
+
+        function updateMetrics() {
+            document.getElementById('statTotal').innerText = complaints.length;
+            document.getElementById('totalComplaintsBadge').innerText = complaints.length;
+            document.getElementById('statPending').innerText = complaints.filter(c => c.status === 'Pending').length;
+            document.getElementById('statTotalBins').innerText = municipalDustbins.length;
+            document.getElementById('totalBinsCountBadge').innerText = municipalDustbins.length;
+            const onDutyWorkers = workers.filter(w => w.status === 'On Duty').length;
+            document.getElementById('statOnDutyWorkers').innerText = onDutyWorkers;
+            document.getElementById('activeCrewCount').innerText = onDutyWorkers;
+            document.getElementById('complaintTableCount').innerText = `${complaints.length} Total`;
+        }
+
+        function initMap() {
+            if (!map) {
+                map = L.map('adminLiveMap', { zoomControl: true }).setView(CITY_CENTER, 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+            } else {
+                map.invalidateSize();
+            }
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!map) return;
+
+            mapMarkers.forEach(m => map.removeLayer(m));
+            binMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+            binMarkers = [];
+
+            complaints.forEach(item => {
+                if (item.status === 'Resolved') return;
+
+                const pt = extractCoords(item.coords);
+                if (!pt) return;
+
+                let colorClass = 'bg-rose-600';
+                if (item.status === 'Dispatched') colorClass = 'bg-amber-500';
+
+                const icon = L.divIcon({
+                    html: `<div class="w-7 h-7 rounded-full ${colorClass} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg">⚠️</div>`,
+                    className: '', iconSize: [28, 28], iconAnchor: [14, 14]
+                });
+
+                const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
+                const cleanLandmark = sanitizeText(item.landmark);
+
+                const marker = L.marker(pt, { icon }).addTo(map);
+                marker.bindPopup(`
+                    <div class="p-2 max-w-[210px] font-sans text-slate-900 space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] font-bold">
+                            <span>${item.id}</span>
+                            <span class="font-extrabold uppercase text-amber-700">${item.status}</span>
+                        </div>
+                        <img src="${item.beforeImage}" class="w-full h-20 object-cover rounded-lg border">
+                        <p class="text-[11px] font-bold text-slate-800">${cleanLandmark}</p>
+                        <p class="text-[10px] text-slate-500">🕒 Filed: ${filedDateString}</p>
+                        <p class="text-[10px] text-slate-600 line-clamp-2">${sanitizeText(item.comment)}</p>
+                        <div class="flex items-center justify-between pt-1">
+                            <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[9px] font-bold text-emerald-700 underline">Open Google Maps ↗</a>
+                            <button onclick="openDispatchModal('${item.id}')" class="text-[9px] font-black text-emerald-800 hover:underline">Dispatch Crew</button>
+                        </div>
+                    </div>
+                `);
+                mapMarkers.push(marker);
+            });
+
+            municipalDustbins.forEach(bin => {
+                let pt = extractCoords(bin.coords) || extractCoords([bin.lat, bin.lng]);
+                if (!pt) return;
 
                 const fill = parseInt(bin.fillLevel) || 0;
                 const isCritical = fill >= 80;
                 const isModerate = fill >= 50 && fill < 80;
 
-                if (isCritical) criticalCount++;
-                if (isModerate) moderateCount++;
-
+                let binBg = "bg-emerald-600";
                 let badgeColor = "#10b981";
-                let statusLabel = "Available Space";
                 if (isCritical) {
+                    binBg = "bg-rose-600 bin-critical-pulse";
                     badgeColor = "#ef4444";
-                    statusLabel = "Critical / Full";
                 } else if (isModerate) {
+                    binBg = "bg-amber-500";
                     badgeColor = "#f59e0b";
-                    statusLabel = "Moderate Level";
-                }
-
-                if (dustbinMarkers[binId]) {
-                    mapInstance.removeLayer(dustbinMarkers[binId]);
                 }
 
                 const binHtml = `
                     <div class="relative flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-xl ${isCritical ? 'bin-critical-pulse bg-rose-600' : (isModerate ? 'bg-amber-500' : 'bg-emerald-600')} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg cursor-pointer">
+                        <div class="w-8 h-8 rounded-xl ${binBg} border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-xl cursor-pointer">
                             🗑️
                         </div>
-                        <span class="text-[9px] font-black font-mono text-white px-1.5 py-0.2 rounded-full mt-0.5 shadow ${isCritical ? 'bg-rose-700' : (isModerate ? 'bg-amber-600' : 'bg-emerald-700')}">
+                        <span class="text-[8px] font-black font-mono text-white px-1 rounded shadow mt-0.5" style="background-color: ${badgeColor}">
                             ${fill}%
                         </span>
                     </div>
@@ -270,30 +1047,28 @@
 
                 const binIcon = L.divIcon({
                     html: binHtml,
-                    className: '',
-                    iconSize: [34, 46],
-                    iconAnchor: [17, 23]
+                    className: '', 
+                    iconSize: [32, 44], 
+                    iconAnchor: [16, 22]
                 });
 
-                const cleanLocationName = cleanDisplayLabel(bin.name || 'Municipal Smart Bin');
+                const cleanBinName = sanitizeText(bin.name);
+                const marker = L.marker(pt, { icon: binIcon }).addTo(map);
 
-                const marker = L.marker([lat, lng], { icon: binIcon }).addTo(mapInstance);
-
-                // POPUP: Clean municipal overview, ZERO LATITUDE/LONGITUDE SHOWN
                 marker.bindPopup(`
                     <div class="p-2.5 max-w-[220px] font-sans text-slate-900 space-y-1.5">
                         <div class="flex items-center justify-between border-b pb-1">
-                            <span class="font-mono font-bold text-[10px] text-slate-500">${binId}</span>
+                            <span class="text-slate-500 font-mono text-[10px] font-bold">${bin.id}</span>
                             <span class="text-[9px] font-black px-2 py-0.5 rounded-full text-white" style="background-color: ${badgeColor};">
-                                ${statusLabel}
+                                ${isCritical ? 'CRITICAL / FULL' : (isModerate ? 'MODERATE' : 'SPACE OK')}
                             </span>
                         </div>
-                        <h4 class="font-extrabold text-xs text-slate-900 leading-tight">${cleanLocationName}</h4>
+                        <h4 class="font-extrabold text-xs text-slate-900">${cleanBinName}</h4>
                         
                         <div class="space-y-0.5 pt-1">
                             <div class="flex justify-between text-[10px] font-bold text-slate-600">
-                                <span>Live Capacity</span>
-                                <span style="color: ${badgeColor}">${fill}% Full</span>
+                                <span>Fill Level</span>
+                                <span style="color: ${badgeColor}; font-weight: bold;">${fill}%</span>
                             </div>
                             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                                 <div class="h-full transition-all duration-500" style="width: ${fill}%; background-color: ${badgeColor}"></div>
@@ -301,159 +1076,487 @@
                         </div>
 
                         <div class="text-[10px] text-slate-600 space-y-0.5 pt-1 border-t">
-                            <p>🌡️ Temp: <b>${bin.temperature || '32'} °C</b></p>
-                            <p>💨 Odour Sensor: <b>${bin.odourStatus || 'Normal'}</b></p>
-                            <p>📍 Municipal Sector: <b>Ward Active</b></p>
+                            <p>🌡️ Temp: <b>${bin.temperature || '--'} °C</b></p>
+                            <p>💨 Odour: <b>${bin.odourStatus || 'Normal'}</b></p>
                         </div>
 
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="block text-center mt-1.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px] font-extrabold shadow">
-                            🧭 Dispatch Directions to Bin
-                        </a>
+                        <div class="pt-2 border-t space-y-1.5">
+                            <button onclick="spawnRadialOffsetDots('${bin.id}')" class="w-full py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-black shadow flex items-center justify-center gap-1 active:scale-95 transition-all">
+                                <span>🎯</span>
+                                <span>Show 5 Multiplier Dots</span>
+                            </button>
+                            <div class="flex items-center justify-between text-[10px] font-bold px-1">
+                                <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-emerald-700 underline">Google Maps ↗</a>
+                                <button onclick="deleteDustbin('${bin.id}')" class="text-rose-600 hover:underline">Delete</button>
+                            </div>
+                        </div>
                     </div>
                 `);
-
-                dustbinMarkers[binId] = marker;
+                binMarkers.push(marker);
             });
-
-            document.getElementById('kpiCriticalBins').innerText = criticalCount;
-            document.getElementById('kpiModerateBins').innerText = moderateCount;
         }
 
-        // 2. Render Citizen Waste Complaints (Zero Coordinates in Popups)
-        function updateComplaintsOnMap(complaintsData) {
-            if (!mapInstance || !complaintsData) return;
+        function initOrUpdatePickerMap(initialCoords) {
+            const container = document.getElementById('binPickerMap');
+            if (!container) return;
 
-            let pendingCount = 0;
-            let resolvedCount = 0;
-            const complaintListEl = document.getElementById('adminGrievanceList');
-            const complaintsArray = Object.values(complaintsData).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            const pt = extractCoords(initialCoords) || CITY_CENTER;
 
-            // Clear old complaint map markers
-            Object.keys(complaintMarkers).forEach(id => mapInstance.removeLayer(complaintMarkers[id]));
-            complaintMarkers = {};
+            if (!pickerMapInstance) {
+                pickerMapInstance = L.map('binPickerMap', { zoomControl: true }).setView(pt, 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(pickerMapInstance);
 
-            if (complaintsArray.length === 0) {
-                complaintListEl.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">Zero active citizen complaints reported.</div>`;
+                const pickerIcon = L.divIcon({
+                    html: `<div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white text-white flex items-center justify-center text-sm font-black shadow-2xl">🗑️</div>`,
+                    className: '', iconSize: [32, 32], iconAnchor: [16, 16]
+                });
+
+                pickerMarker = L.marker(pt, { icon: pickerIcon, draggable: true }).addTo(pickerMapInstance);
+                pickerMarker.on('dragend', (e) => {
+                    const pos = e.target.getLatLng();
+                    updatePickerInputs(pos.lat, pos.lng);
+                });
+
+                pickerMapInstance.on('click', (e) => {
+                    pickerMarker.setLatLng(e.latlng);
+                    updatePickerInputs(e.latlng.lat, e.latlng.lng);
+                });
             } else {
-                complaintListEl.innerHTML = "";
+                pickerMapInstance.invalidateSize();
+                pickerMarker.setLatLng(pt);
+                pickerMapInstance.setView(pt, 16);
+            }
+            updatePickerInputs(pt[0], pt[1]);
+        }
+
+        function updatePickerInputs(lat, lng) {
+            document.getElementById('binLatInput').value = (parseFloat(lat) || CITY_CENTER[0]).toFixed(6);
+            document.getElementById('binLngInput').value = (parseFloat(lng) || CITY_CENTER[1]).toFixed(6);
+        }
+
+        function toggleComplaintSelect(complaintId, isChecked) {
+            if (isChecked) selectedComplaintIds.add(complaintId);
+            else selectedComplaintIds.delete(complaintId);
+            document.getElementById('selectedComplaintCountBadge').innerText = selectedComplaintIds.size;
+        }
+
+        function toggleSelectAllComplaints(isChecked) {
+            const checkboxes = document.querySelectorAll('.complaint-select-cb');
+            selectedComplaintIds.clear();
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+                if (isChecked) selectedComplaintIds.add(cb.value);
+            });
+            document.getElementById('selectedComplaintCountBadge').innerText = selectedComplaintIds.size;
+        }
+
+        function batchDeleteResolvedComplaints() {
+            if (selectedComplaintIds.size === 0) {
+                showToast("Select resolved complaints to delete using the checkboxes!", true);
+                return;
             }
 
-            complaintsArray.forEach((item) => {
-                if (item.status === 'Resolved') resolvedCount++;
-                else pendingCount++;
+            const targets = complaints.filter(c => selectedComplaintIds.has(c.id));
+            const activeIncluded = targets.some(c => c.status !== 'Resolved');
 
-                const lat = item.coords ? item.coords[0] : null;
-                const lng = item.coords ? item.coords[1] : null;
+            if (activeIncluded) {
+                showToast("⚠️ Active tickets (Pending/Dispatched) cannot be deleted! Only resolved tickets can be purged.", true);
+                return;
+            }
 
-                const cleanLandmark = cleanDisplayLabel(item.landmark);
-                const cleanComment = cleanDisplayLabel(item.comment);
-                const cleanCitizenName = cleanDisplayLabel(item.citizenName || "Resident");
+            if (confirm(`Purge ${selectedComplaintIds.size} resolved complaints permanently from database?`)) {
+                const updates = {};
+                selectedComplaintIds.forEach(id => {
+                    updates['complaints/' + id] = null;
+                });
 
-                // Plot on Map if not yet resolved
-                if (lat && lng && item.status !== 'Resolved') {
-                    const complaintIconHtml = `
-                        <div class="relative flex flex-col items-center complaint-pulse">
-                            <div class="w-8 h-8 rounded-full bg-amber-600 border-2 border-white text-white flex items-center justify-center text-xs font-black shadow-lg cursor-pointer">
-                                📢
+                db.ref().update(updates).then(() => {
+                    showToast(`🗑️ ${selectedComplaintIds.size} resolved complaints purged!`);
+                    selectedComplaintIds.clear();
+                    document.getElementById('selectedComplaintCountBadge').innerText = "0";
+                    const allCb = document.getElementById('selectAllComplaintsBox');
+                    if (allCb) allCb.checked = false;
+                }).catch(err => showToast("Delete failed: " + err.message, true));
+            }
+        }
+
+        function renderComplaintsTable() {
+            const tbody = document.getElementById('complaintsTableBody');
+            tbody.innerHTML = "";
+
+            if (complaints.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 text-xs">No grievances in cloud.</td></tr>`;
+                return;
+            }
+
+            complaints.forEach(item => {
+                const pt = extractCoords(item.coords) || CITY_CENTER;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-emerald-950/20 transition-colors";
+
+                let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30">Pending</span>`;
+                if (item.status === 'Dispatched') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">Dispatched</span>`;
+                if (item.status === 'Resolved') statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
+
+                const filedDateString = item.filedAtFormatted || (item.timestamp ? formatDateTime(item.timestamp) : "Recently");
+                const resolvedDateString = item.resolvedAt ? formatDateTime(item.resolvedAt) : null;
+                const isResolved = (item.status === 'Resolved');
+                const cleanLandmark = sanitizeText(item.landmark);
+
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <input type="checkbox" value="${item.id}" onchange="toggleComplaintSelect('${item.id}', this.checked)" ${selectedComplaintIds.has(item.id) ? 'checked' : ''} class="complaint-select-cb accent-emerald-600 rounded cursor-pointer">
+                    </td>
+                    <td class="p-3">
+                        <span class="font-black text-white font-mono block">${item.id}</span>
+                        <span class="text-[10px] font-bold text-emerald-400 block mt-0.5">🕒 Filed: ${filedDateString}</span>
+                        ${resolvedDateString ? `<span class="text-[9px] font-bold text-emerald-400 block">✓ Cleared: ${resolvedDateString}</span>` : ''}
+                    </td>
+                    <td class="p-3">
+                        <span class="font-bold text-slate-200 block">${item.citizenName || 'Resident'}</span>
+                    </td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <div class="text-center">
+                                <img src="${item.beforeImage}" onclick="openLightbox('${item.beforeImage}')" class="w-12 h-12 rounded-xl object-cover border border-emerald-950 cursor-pointer shadow-sm">
+                                <span class="text-[8px] text-slate-400 font-bold block uppercase mt-0.5">Before</span>
                             </div>
+                            ${item.afterImage ? `
+                                <div class="text-center">
+                                    <img src="${item.afterImage}" onclick="openLightbox('${item.afterImage}')" class="w-12 h-12 rounded-xl object-cover border-2 border-emerald-500 cursor-pointer shadow-sm">
+                                    <span class="text-[8px] text-emerald-400 font-bold block uppercase mt-0.5">Clean</span>
+                                </div>
+                            ` : ''}
                         </div>
-                    `;
-
-                    const complaintIcon = L.divIcon({
-                        html: complaintIconHtml,
-                        className: '',
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                    });
-
-                    const marker = L.marker([lat, lng], { icon: complaintIcon }).addTo(mapInstance);
-
-                    // POPUP: ZERO LAT/LNG SHOWN
-                    marker.bindPopup(`
-                        <div class="p-2.5 max-w-[210px] font-sans text-slate-900 space-y-1.5">
-                            <div class="flex items-center justify-between border-b pb-1">
-                                <span class="font-mono font-bold text-[10px] text-slate-500">${item.id}</span>
-                                <span class="text-[9px] font-black px-2 py-0.5 rounded-full text-white bg-amber-600">
-                                    ${item.status}
-                                </span>
-                            </div>
-                            <h4 class="font-extrabold text-xs text-slate-900 leading-tight">${cleanLandmark}</h4>
-                            <p class="text-[10px] text-slate-600 line-clamp-2">${cleanComment}</p>
-                            <span class="text-[9px] font-bold text-emerald-700 block">${item.geminiVerdict || 'Solid Waste Detected'}</span>
-
-                            <div class="pt-1 border-t flex flex-col gap-1">
-                                <button onclick="markComplaintResolved('${item.id}')" class="w-full py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px] font-extrabold shadow">
-                                    ✓ Mark as Cleared
+                    </td>
+                    <td class="p-3">
+                        <span class="font-bold text-slate-200 block">${cleanLandmark}</span>
+                        <a href="https://www.google.com/maps?q=${pt[0]},${pt[1]}" target="_blank" class="text-[10px] font-bold text-emerald-400 underline">View Location ↗</a>
+                    </td>
+                    <td class="p-3">
+                        <p class="text-slate-300 text-xs line-clamp-2">${sanitizeText(item.comment)}</p>
+                        <span class="text-[9px] text-emerald-400/80 font-mono block mt-0.5">${item.geminiVerdict || 'AI Verified'}</span>
+                    </td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3"><span class="font-bold text-xs text-slate-300">${item.assignedWorker ? `👷 ${item.assignedWorker}` : 'Unassigned'}</span></td>
+                    <td class="p-3 text-right">
+                        <div class="flex flex-col items-end gap-1.5">
+                            ${item.status === 'Pending' ? `
+                                <button onclick="openDispatchModal('${item.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-sm whitespace-nowrap">
+                                    🚚 Dispatch
                                 </button>
-                                <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="block text-center py-1 bg-slate-800 text-white rounded text-[10px] font-extrabold">
-                                    🧭 Directions to Spot
-                                </a>
+                            ` : ''}
+                            ${isResolved ? `
+                                <button onclick="adminDeleteComplaint('${item.id}')" class="px-2.5 py-1.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 font-extrabold text-[10px] rounded-lg shadow-sm flex items-center gap-1 active:scale-95 transition-all whitespace-nowrap">
+                                    <span>🗑️</span>
+                                    <span>Delete</span>
+                                </button>
+                            ` : `
+                                <span class="text-[9px] text-slate-500 font-bold bg-black/40 border border-emerald-950 px-2 py-0.5 rounded whitespace-nowrap">
+                                    🔒 In Progress
+                                </span>
+                            `}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function adminDeleteComplaint(complaintId) {
+            const target = complaints.find(c => c.id === complaintId);
+            if (!target) return;
+
+            if (target.status !== 'Resolved') {
+                showToast("⚠️ Active tickets cannot be deleted! Only resolved tickets can be purged.", true);
+                return;
+            }
+
+            if (confirm(`Permanent Action: Are you sure you want to purge resolved ticket ${complaintId} from cloud records?`)) {
+                db.ref('complaints/' + complaintId).remove()
+                    .then(() => showToast(`🗑️ Ticket ${complaintId} purged from cloud.`))
+                    .catch((err) => showToast("Delete failed: " + err.message, true));
+            }
+        }
+
+        function toggleDustbinSelect(binId, isChecked) {
+            if (isChecked) selectedDustbinIds.add(binId);
+            else selectedDustbinIds.delete(binId);
+            document.getElementById('selectedBinCountBadge').innerText = selectedDustbinIds.size;
+        }
+
+        function toggleSelectAllBins(isChecked) {
+            const checkboxes = document.querySelectorAll('.bin-select-cb');
+            selectedDustbinIds.clear();
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+                if (isChecked) selectedDustbinIds.add(cb.value);
+            });
+            document.getElementById('selectedBinCountBadge').innerText = selectedDustbinIds.size;
+        }
+
+        function batchDeleteDustbins() {
+            if (selectedDustbinIds.size === 0) {
+                showToast("Select bins to delete using the checkboxes!", true);
+                return;
+            }
+
+            if (confirm(`Permanently delete ${selectedDustbinIds.size} smart dustbins from database?`)) {
+                const updates = {};
+                selectedDustbinIds.forEach(id => {
+                    updates['dustbins/' + id] = null;
+                });
+
+                db.ref().update(updates).then(() => {
+                    showToast(`🗑️ ${selectedDustbinIds.size} dustbins deleted!`);
+                    selectedDustbinIds.clear();
+                    document.getElementById('selectedBinCountBadge').innerText = "0";
+                    const allCb = document.getElementById('selectAllBinsBox');
+                    if (allCb) allCb.checked = false;
+                }).catch(err => showToast("Delete failed: " + err.message, true));
+            }
+        }
+
+        function renderDustbinsTable() {
+            const tbody = document.getElementById('dustbinsTableBody');
+            tbody.innerHTML = "";
+
+            if (municipalDustbins.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 text-xs">No smart bins registered yet in City.</td></tr>`;
+                return;
+            }
+
+            municipalDustbins.forEach(bin => {
+                const fill = parseInt(bin.fillLevel) || 0;
+                const isCritical = fill >= 80;
+                const isModerate = fill >= 50 && fill < 80;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-emerald-950/20 transition-colors";
+
+                let fillBadgeColor = isCritical ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : (isModerate ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30');
+
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <input type="checkbox" value="${bin.id}" onchange="toggleDustbinSelect('${bin.id}', this.checked)" ${selectedDustbinIds.has(bin.id) ? 'checked' : ''} class="bin-select-cb accent-emerald-600 rounded cursor-pointer">
+                    </td>
+                    <td class="p-3 font-mono text-slate-400">${bin.id}</td>
+                    <td class="p-3 font-bold text-white">${sanitizeText(bin.name)}</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black border ${fillBadgeColor}">${fill}%</span>
+                            <div class="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="h-full ${isCritical ? 'bg-rose-500' : (isModerate ? 'bg-amber-500' : 'bg-emerald-500')}" style="width: ${fill}%"></div>
                             </div>
                         </div>
-                    `);
+                    </td>
+                    <td class="p-3 text-slate-300 text-[11px]">
+                        ${bin.temperature || '--'}°C / <span class="font-bold ${bin.odourStatus === 'High Odour' ? 'text-rose-400' : 'text-slate-300'}">${bin.odourStatus || 'Normal'}</span>
+                    </td>
+                    <td class="p-3 text-slate-300 text-[11px]">${bin.capacity || '500L'} • ${bin.category || 'Mixed'}</td>
+                    <td class="p-3 text-right space-x-1.5">
+                        <button onclick="focusMapOnDustbin('${bin.id}')" class="px-2.5 py-1 bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700 text-emerald-200 text-[10px] rounded-lg font-bold">🗺️ Map</button>
+                        <button onclick="spawnRadialOffsetDots('${bin.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] rounded-lg font-bold">🎯 5 Multipliers</button>
+                        <button onclick="deleteDustbin('${bin.id}')" class="px-2.5 py-1 bg-rose-800 hover:bg-rose-700 text-white text-[10px] rounded-lg font-bold">🗑️ Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
-                    complaintMarkers[item.id] = marker;
-                }
+        function focusMapOnDustbin(binId) {
+            const b = municipalDustbins.find(item => item.id === binId);
+            if (!b) return;
+            const pt = extractCoords(b.coords) || extractCoords([b.lat, b.lng]);
+            if (!pt) return;
+            scrollToSection('sectionMap');
+            if (map) {
+                map.setView(pt, 17, { animate: true });
+                showToast(`📍 Centered on ${sanitizeText(b.name)}`);
+            }
+        }
 
-                // Render in Table / Card list below map
+        function openDustbinModal(binId = null) {
+            const modal = document.getElementById('dustbinModal');
+            let targetCoords = CITY_CENTER;
+
+            if (binId) {
+                const b = municipalDustbins.find(item => item.id === binId);
+                if (!b) return;
+                document.getElementById('dustbinModalTitle').innerText = `Edit Dustbin (${b.id})`;
+                document.getElementById('editBinId').value = b.id;
+                document.getElementById('binNameInput').value = sanitizeText(b.name);
+                document.getElementById('binCapacityInput').value = b.capacity || "500L";
+                document.getElementById('binCategoryInput').value = b.category || "Mixed Municipal Waste";
+                targetCoords = extractCoords(b.coords) || extractCoords([b.lat, b.lng]) || CITY_CENTER;
+            } else {
+                document.getElementById('dustbinModalTitle').innerText = "Place Smart Bin on City Map";
+                document.getElementById('editBinId').value = "";
+                document.getElementById('binNameInput').value = "";
+                document.getElementById('binCapacityInput').value = "500L";
+                document.getElementById('binCategoryInput').value = "Mixed Municipal Waste";
+                document.getElementById('offsetSourceBinSelect').value = "";
+                document.getElementById('offsetDistanceMeters').value = "50";
+                document.getElementById('offsetDirectionSelect').value = "90";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => initOrUpdatePickerMap(targetCoords), 180);
+        }
+
+        function closeDustbinModal() { document.getElementById('dustbinModal').classList.add('hidden'); }
+
+        function handleSaveDustbin(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editBinId').value || `BIN-${Math.floor(100 + Math.random() * 900)}`;
+            const name = sanitizeText(document.getElementById('binNameInput').value.trim());
+            const lat = parseFloat(document.getElementById('binLatInput').value) || CITY_CENTER[0];
+            const lng = parseFloat(document.getElementById('binLngInput').value) || CITY_CENTER[1];
+            const cap = document.getElementById('binCapacityInput').value;
+            const cat = document.getElementById('binCategoryInput').value;
+
+            const existing = municipalDustbins.find(b => b.id === editId) || {};
+
+            const binData = { 
+                id: editId, 
+                name: name, 
+                coords: [lat, lng], 
+                lat: lat,
+                lng: lng,
+                capacity: cap, 
+                category: cat,
+                fillLevel: existing.fillLevel || 0,
+                temperature: existing.temperature || 28.0,
+                odourLevel: existing.odourLevel || 300,
+                odourStatus: existing.odourStatus || "Normal",
+                timestamp: Date.now()
+            };
+
+            showToast("🛰️ Saving dustbin to cloud database...");
+
+            db.ref('dustbins/' + editId).update(binData).then(() => {
+                showToast(`✓ Dustbin ${name} pinned on map!`);
+                closeDustbinModal();
+            }).catch(err => {
+                showToast("Save error: " + err.message, true);
+            });
+        }
+
+        function deleteDustbin(binId) {
+            if (confirm(`Delete dustbin ${binId}?`)) {
+                db.ref('dustbins/' + binId).remove().then(() => showToast(`Dustbin ${binId} deleted`));
+            }
+        }
+
+        function openDispatchModal(complaintId) {
+            selectedComplaintIdForDispatch = complaintId;
+            const list = document.getElementById('dispatchWorkerList');
+            list.innerHTML = "";
+
+            const onDutyWorkers = workers.filter(w => w.status === 'On Duty');
+            if (onDutyWorkers.length === 0) {
+                list.innerHTML = `<p class="text-xs text-rose-400 py-3">No crew members marked On Duty in City!</p>`;
+            } else {
+                onDutyWorkers.forEach(w => {
+                    const label = document.createElement('label');
+                    label.className = "flex items-center justify-between p-3 rounded-xl border border-emerald-950 bg-black/40 cursor-pointer";
+                    label.innerHTML = `
+                        <div>
+                            <span class="font-bold text-xs text-white block">👷 ${w.name} (${w.vehicle})</span>
+                            <span class="text-[10px] text-slate-400">${sanitizeText(w.ward)}</span>
+                        </div>
+                        <input type="radio" name="selectedWorkerRadio" value="${w.name}" class="text-emerald-600">
+                    `;
+                    list.appendChild(label);
+                });
+            }
+            document.getElementById('dispatchModal').classList.remove('hidden');
+        }
+
+        function closeDispatchModal() { document.getElementById('dispatchModal').classList.add('hidden'); }
+
+        function confirmDispatch() {
+            const selected = document.querySelector('input[name="selectedWorkerRadio"]:checked');
+            if (!selected) return;
+
+            const workerName = selected.value;
+            db.ref('complaints/' + selectedComplaintIdForDispatch).update({
+                status: "Dispatched",
+                assignedWorker: workerName
+            }).then(() => {
+                showToast(`🚚 ${workerName} dispatched to ${selectedComplaintIdForDispatch}`);
+                closeDispatchModal();
+            });
+        }
+
+        function renderWorkersRoster() {
+            const grid = document.getElementById('workersRosterGrid');
+            grid.innerHTML = "";
+
+            workers.forEach(w => {
                 const card = document.createElement('div');
-                card.className = "p-3 rounded-2xl bg-[#08180B] border border-emerald-950 flex flex-wrap items-center justify-between gap-3 text-xs";
+                card.className = "bg-[#0b2410] border border-emerald-900/60 rounded-2xl p-4 space-y-3 shadow-sm flex flex-col justify-between";
+                let statusBadgeColor = w.status === 'On Duty' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700';
 
                 card.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <img src="${item.beforeImage}" class="w-12 h-12 rounded-xl object-cover border border-emerald-900">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono font-bold text-[10px] text-slate-400">${item.id}</span>
-                                <span class="text-[9px] px-2 py-0.5 rounded-full font-bold ${item.status === 'Resolved' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-300'}">
-                                    ${item.status}
-                                </span>
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-mono text-slate-500">${w.id}</span>
+                                <h3 class="font-extrabold text-sm text-white">${w.name}</h3>
                             </div>
-                            <h4 class="font-extrabold text-white text-xs mt-0.5">${cleanLandmark}</h4>
-                            <p class="text-[10px] text-slate-400">Citizen: ${cleanCitizenName}</p>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusBadgeColor}">${w.status}</span>
+                        </div>
+                        <div class="text-xs space-y-1 text-slate-400 mt-2">
+                            <p>📍 Ward: <strong class="text-slate-200">${sanitizeText(w.ward)}</strong></p>
+                            <p>🚜 Vehicle: <strong class="text-slate-200">${w.vehicle}</strong></p>
+                            <p>📞 Phone: <strong class="text-slate-200">${w.phone}</strong></p>
                         </div>
                     </div>
-
-                    <div class="flex items-center gap-2">
-                        ${item.status !== 'Resolved' ? `
-                            <button onclick="markComplaintResolved('${item.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl active:scale-95 transition-all shadow">
-                                Mark Resolved
-                            </button>
-                        ` : `
-                            <span class="text-[10px] font-black text-emerald-400">✓ Resolved</span>
-                        `}
+                    <div class="pt-2 border-t border-emerald-950 flex items-center justify-between text-[10px] font-bold text-slate-400">
+                        <span>Active Tasks: <strong class="text-white">${w.activeTasks || 0}</strong></span>
+                        <span>Cleanups Done: <strong class="text-emerald-400">${w.completed || 0}</strong></span>
                     </div>
                 `;
-                complaintListEl.appendChild(card);
-            });
-
-            document.getElementById('kpiPendingComplaints').innerText = pendingCount;
-            document.getElementById('kpiResolvedComplaints').innerText = resolvedCount;
-        }
-
-        function markComplaintResolved(id) {
-            db.ref('complaints/' + id).update({
-                status: 'Resolved',
-                resolvedAt: Date.now()
-            }).then(() => {
-                showToast(`Ticket ${id} marked as Resolved!`);
-            }).catch(err => {
-                showToast("Update failed: " + err.message, true);
+                grid.appendChild(card);
             });
         }
 
-        // Initialize Listeners
-        window.addEventListener('DOMContentLoaded', () => {
-            initAdminMap();
+        function openWorkerModal() { document.getElementById('workerModal').classList.remove('hidden'); }
+        function closeWorkerModal() { document.getElementById('workerModal').classList.add('hidden'); }
 
-            db.ref('dustbins').on('value', (snap) => {
-                updateDustbinsOnMap(snap.val());
-            });
+        function handleSaveWorker(e) {
+            e.preventDefault();
+            const newId = `W10${workers.length + 1}`;
+            const name = document.getElementById('workerNameInput').value.trim();
+            const phone = document.getElementById('workerPhoneInput').value.trim();
+            const ward = sanitizeText(document.getElementById('workerWardInput').value.trim());
+            const vehicle = document.getElementById('workerVehicleInput').value.trim();
+            const status = document.getElementById('workerStatusInput').value;
 
-            db.ref('complaints').on('value', (snap) => {
-                updateComplaintsOnMap(snap.val());
+            const newWorker = { id: newId, name, phone, ward, vehicle, status, activeTasks: 0, completed: 0 };
+            db.ref('workers/' + newId).set(newWorker).then(() => {
+                showToast(`Worker ${name} registered!`);
+                closeWorkerModal();
             });
-        });
+        }
+
+        function switchAdminTab(tab) {
+            if (tab === 'workers') {
+                document.getElementById('viewOverview').classList.add('hidden');
+                document.getElementById('viewWorkers').classList.remove('hidden');
+            } else {
+                document.getElementById('viewWorkers').classList.add('hidden');
+                document.getElementById('viewOverview').classList.remove('hidden');
+                setTimeout(() => map && map.invalidateSize(), 150);
+            }
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('imageLightbox').classList.remove('hidden');
+        }
+        function closeLightbox() { document.getElementById('imageLightbox').classList.add('hidden'); }
     </script>
 </body>
 </html>
